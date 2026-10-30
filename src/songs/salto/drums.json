@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "groups": {
+    "fm4:D3": {"lane": "snare", "cymbal": false},
+    "fm4:D5": {"lane": "tom3", "cymbal": false},
+    "fm4:F5": {"lane": "tom2", "cymbal": false},
+    "fm4:G2": {"lane": "kick", "cymbal": false}
+  }
+}

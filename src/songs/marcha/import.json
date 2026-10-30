@@ -1,0 +1,8 @@
+{
+  "name": "marcha",
+  "source": "audio/marcha.vgm",
+  "guitarra": "fm1",
+  "teclado": "fm2",
+  "bajo": "fm3",
+  "bateria": "fm4"
+}

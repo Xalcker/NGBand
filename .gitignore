@@ -1,0 +1,30 @@
+# Salida de compilación
+build/
+# Herramientas descargadas (emuladores, etc.)
+tools/
+# Canciones de juegos comerciales (copyright): los VGM originales van en songs_src/
+songs_src/
+# Lo que se importa queda en src/songs/<nombre>/; en git solo van las canciones originales de NGBand
+# (GPL-2.0-or-later, de audio/*.txt y audio/*.py).
+src/songs/*
+!src/songs/demo/
+!src/songs/amanecer/
+!src/songs/brisa/
+!src/songs/carrera/
+!src/songs/cumbia/
+!src/songs/luna/
+!src/songs/marcha/
+!src/songs/noche/
+!src/songs/salto/
+!src/songs/tormenta/
+# Python (uv)
+.venv/
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.hypothesis/
+.DS_Store
+# Lo que MAME deja al jugar desde la raíz (ini/ sí va: es la configuración del proyecto)
+/cfg/
+/nvram/
+/snap/

@@ -1,0 +1,1025 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Crear la estructura del proyecto y el Build_System base": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382841950
+      },
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382850363
+      },
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382991607
+      }
+    ],
+    "1.2 Implementar `--release`, reproducibilidad y orden de canciones": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382842048
+      },
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382996217
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383201087
+      }
+    ],
+    "2.1 Crear el arnés de pruebas en el host para el C": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382842094
+      },
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382996251
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383201141
+      }
+    ],
+    "2.2 Implementar el Judge en `gameplay.c`": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382842194
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383521889
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793384641841
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793385444268
+      }
+    ],
+    "2.9 Implementar vida, Star_Power y pausa en `gameplay.c`": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382842272
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383521954
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793385452521
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793385841066
+      }
+    ],
+    "3. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382842324
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383522027
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793385849710
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793385878600
+      }
+    ],
+    "4.1 Implementar el lector de VGM y el seguimiento del YM2610": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382842369
+      },
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382850966
+      },
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382990555
+      }
+    ],
+    "4.2 Implementar la extracción de notas": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382842418
+      },
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382997151
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383201195
+      }
+    ],
+    "4.4 Implementar el Frame_Stream": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382842468
+      },
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382997528
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383201274
+      }
+    ],
+    "4.6 Implementar el Chart_Generator compartido": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382842524
+      },
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382997960
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383201351
+      }
+    ],
+    "4.9 Implementar `songgen.py` y la CLI `ngband`": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382842578
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383522091
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793384645957
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793385445391
+      }
+    ],
+    "4.11 Implementar `reimport`, `edits.json`, `drums.json` y manejo de errores": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382842624
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383522156
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793385453700
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793385842220
+      }
+    ],
+    "5.1 Implementar `adpcma.py`": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382842701
+      },
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382851368
+      },
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382991201
+      }
+    ],
+    "6. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382842745
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383522227
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793385850503
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793385879425
+      }
+    ],
+    "7.1 Implementar el núcleo del Audio_Driver y el modelo de sombra": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382842793
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383522285
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793384647145
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793385446540
+      }
+    ],
+    "7.3 Completar el driver: batería, efectos, pausa y búsqueda": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382842843
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383522340
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793385454915
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793385843419
+      }
+    ],
+    "7.4 Implementar `audio_cmd.c` en el 68000": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382842891
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383522562
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793385456171
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793385844620
+      }
+    ],
+    "8.1 Implementar el compilador de gráficos `ngband gfx`": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382842934
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383209006
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383514508
+      }
+    ],
+    "8.3 Implementar `spr.c`, `fix.c` y `vram_queue.c`": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382842983
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383522618
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793384647951
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793385447745
+      }
+    ],
+    "8.5 Implementar `input.c`": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382843030
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383522674
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793385456996
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793385845587
+      }
+    ],
+    "8.7 Implementar `highway.c`": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382843074
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383522734
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793385884144
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793386266569
+      }
+    ],
+    "8.9 Implementar `hud.c` en la Fix_Layer": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382843118
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383522803
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793385884530
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793386267541
+      }
+    ],
+    "9.1 Implementar `main.c`, `isr.c` y la escena de juego": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382843167
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383522862
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793386275924
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793386990301
+      }
+    ],
+    "9.2 Implementar el Test_Harness de MAME": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382843215
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383522926
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793386277572
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793386991461
+      }
+    ],
+    "10. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382843261
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383522996
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793386999660
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793387548297
+      }
+    ],
+    "11.1 Integrar vida, Star_Power, Sustain, pausa y resultados en el juego": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382843310
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383523053
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793387549626
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793389592112
+      }
+    ],
+    "12.1 Implementar la lógica de `options.c` y `practice.c`": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382843358
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383523120
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793385885787
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793386269137
+      }
+    ],
+    "13.1 Implementar `records.c`": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382843407
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383523194
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793384648734
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793385448466
+      }
+    ],
+    "13.4 Implementar `is_record_eligible` y la actualización del mejor récord": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382843451
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383523265
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793385886879
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793386270355
+      }
+    ],
+    "14.1 Implementar las escenas de título, Menu, Options_Screen y resultados": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382843500
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383523341
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793389595409
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793389847593
+      }
+    ],
+    "15. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382843543
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383523414
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793389848564
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793389888225
+      }
+    ],
+    "16.1 Implementar la máquina de estados `stage.c`": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382843583
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383523468
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793385887753
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793386271624
+      }
+    ],
+    "16.3 Dibujar el Stage con sprites del pool \"escenario\"": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382843633
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383523543
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793389889415
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793390226195
+      }
+    ],
+    "17.1 Implementar la conversión de FamiStudio a VGM del YM2610": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382843675
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383523582
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793386278580
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793386992800
+      }
+    ],
+    "17.2 Importar las diez canciones y los efectos de sonido": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382843715
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383523631
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793387550828
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793389593253
+      }
+    ],
+    "18.1 Implementar `versus.c` (reglas de VS y COOP)": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382843770
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383523687
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793386279416
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793386993855
+      }
+    ],
+    "18.4 Integrar el modo de 2 jugadores": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382843855
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383523739
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793390227008
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793390547140
+      }
+    ],
+    "19.1 Implementar el servidor del editor y las ediciones": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382843902
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383523798
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793386280331
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793386994843
+      }
+    ],
+    "19.2 Implementar la interfaz web y Escuchar": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382843952
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383523864
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793387551703
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793389594445
+      }
+    ],
+    "20. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382843990
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383523927
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793390547841
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793390693788
+      }
+    ],
+    "21.1 Completar el Test_Harness de MAME": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382844040
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383523987
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793390694904
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793391264351
+      }
+    ],
+    "22.1 Escribir README, CLAUDE.md, LICENSE y actualizar la paridad": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382844084
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383524044
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793390695636
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793391265481
+      }
+    ],
+    "23. Final checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382844135
+      },
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383524104
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793391266243
+      },
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793391318541
+      }
+    ],
+    "5. Conversión ADPCM-A": [
+      {
+        "executionId": "7d658428-daaa-4f54-8ac5-d1bad128ba56",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793382991261
+      }
+    ],
+    "1. Estructura del proyecto y compilación": [
+      {
+        "executionId": "d90d50b9-b9f1-4c4c-a936-0a2bcd19d5c3",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793383201313
+      }
+    ],
+    "2. Núcleo de reglas del juego (Judge, vida, Star_Power)": [
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793385841120
+      }
+    ],
+    "4. Herramientas de PC: VGM, Frame_Stream, Charts e importador": [
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793385842292
+      }
+    ],
+    "7. Audio_Driver (Z80) y protocolo con el 68000": [
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793385844661
+      }
+    ],
+    "8. Gráficos, sprites y Highway": [
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793386267590
+      }
+    ],
+    "12. Opciones y modo práctica": [
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793386269183
+      }
+    ],
+    "13. Récords en backup RAM": [
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793386270412
+      }
+    ],
+    "9. Integración de la fase 1": [
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793386991504
+      }
+    ],
+    "11. Fase 2: Instruments, Difficulties y resultados": [
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793389592161
+      }
+    ],
+    "17. Canciones originales": [
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793389593298
+      }
+    ],
+    "19. Chart_Editor": [
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793389594494
+      }
+    ],
+    "14. Pantallas: título, Menu y opciones": [
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793389847706
+      }
+    ],
+    "16. Escenario": [
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793390226272
+      }
+    ],
+    "18. Dos jugadores (VS y Co-Op)": [
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793390547252
+      }
+    ],
+    "21. Pruebas automáticas completas": [
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793391264414
+      }
+    ],
+    "22. Documentación y paridad": [
+      {
+        "executionId": "0dff8e95-baab-4d92-88b4-80128983cc98",
+        "chatSessionId": "sess_190b2691-4772-4e87-9235-453c9b9349f8",
+        "timestamp": 1793391265548
+      }
+    ]
+  }
+}

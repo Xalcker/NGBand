@@ -1,0 +1,11 @@
+{
+  "name": "demo",
+  "source": "audio/demo.vgm",
+  "title": "Demo",
+  "game": "NGBand",
+  "duration": 60.0,
+  "beat_frames": 30,
+  "guitarra": "fm1",
+  "teclado": "fm2",
+  "bajo": "fm3"
+}
