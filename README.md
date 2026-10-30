@@ -199,9 +199,11 @@ pierden cuadros; ver `docs/ESTADO.md`).
 
 - **C con ngdevkit** para el 68000 y **SDCC** para el Z80, compilados con `build.sh`. Los gráficos no son
   imágenes: se generan en Python al compilar (`uv run ngband gfx`), así que la ROM los trae ya en tiles.
-- **La autopista en perspectiva:** la Neo Geo escala sprites por hardware (16 niveles en horizontal, 256 en
-  vertical), así que las gemas y las colas se reducen con los registros de escala de cada sprite, sin
-  interrupciones por línea como en la Genesis. Los textos y el HUD van en la capa fija (Fix).
+- **La autopista en perspectiva:** la Neo Geo no tiene planos de fondo ni interrupciones por línea como la Genesis,
+  así que todo son sprites. La pista (superficie, carriles, bordes y aros) es un trapecio fijo de 14 columnas de
+  sprites que se escribe una vez por canción; sus franjas bajan solas con la autoanimación del LSPC (8 fases de
+  tiles), sin trabajo del 68000. Las gemas y las colas se reducen con los registros de escala de cada sprite. Los
+  textos y el HUD van en la capa fija (Fix).
 - **El audio:** un driver propio en el Z80 (`src/z80/`) aplica al YM2610 el flujo de escrituras por cuadro
   (FM, SSG y la batería en ADPCM-A); el 68000 le manda órdenes (`src/audio_proto.h`). Para fallar, baja el volumen
   del canal del instrumento y lo restaura al acertar.

@@ -6,10 +6,29 @@ Este archivo es el punto de partida para cualquier agente o persona que siga el 
 
 ## Resumen en una línea
 
-La ROM compila con **las 10 canciones** y en MAME **suena**. Las 249 pruebas del host pasan. En
-`tests/run_tests.sh` (última corrida limpia, con `-DNGBAND_DEBUG`): **14 de 55 casos pasan**, **0 desincronías**
-de audio y los bots perfectos aciertan todas las Notes en todos los modos (espejo, velocidades, VS, Co-Op,
-batería). Casi todo lo que falla es **rendimiento** (cuadros perdidos), sobre todo con 2 jugadores (~40%).
+La ROM compila con **las 10 canciones**, en MAME **suena**, y la autopista tiene **pista fija** (sprites) con
+franjas que se mueven solas. Repositorio público: <https://github.com/Xalcker/NGBand>. Las 250 pruebas del host
+pasan. En `tests/run_tests.sh` (`-DNGBAND_DEBUG`): **34 de 55 casos pasan**, 0 desincronías; los bots perfectos
+aciertan todo en todos los modos. Lo que falla: sincronía audio/Chart con fallos (14), 2 jugadores (cuadros
+perdidos), récord tras apagar, Practice y la calibración del bot humano.
+
+## Sesión 4 (2026-10-30): pista fija y repositorio
+
+- **Pista fija** (`src/track.c`, arte en `gfx.py` `draw_track`): trapecio de 14 columnas x 10 tiles con la
+  superficie, bordes, 4 divisores y los aros de golpe. Usa los sprites de hardware 1-28 (14 por jugador; con 2
+  jugadores se encoge a columnas de 12 px), que se escriben una vez al empezar la canción (`track_show`) y se
+  ocultan al salir (`track_hide`, también en `screen_reset`). La sombra de sprites empieza en el 29
+  (`SPR_HW_BASE`): la pista queda detrás de todo y el sprite 0 ya no se usa (con eso desapareció el tile rojo
+  suelto de la pantalla de resultados).
+- **Franjas que bajan sin CPU:** cada celda trae 8 tiles (una fase cada uno, alineados a 8) y la autoanimación de
+  3 bits del LSPC (`SCB1` bit 3) los cicla. `REG_LSPCMODE` (bits 15-8) fija cuadros por fase = 2·caída/pasos
+  (redondeado), así que van a la velocidad de las gemas (exacto en 100% con caída par); el bit 3 las congela en
+  pausa. Periodo de 32 px en Y, lineal como el movimiento de las gemas (`row_of`).
+- **Sin líneas de tiempo con sprites** (`beat_frames = 0` en `play.c`): usaban el tile de la gema y se veían como
+  bloques; quitarlas bajó los cuadros perdidos (VS de 2847 a ~45, fácil de 4 a 1).
+- **Git:** `git init`, autor `Xalcker` con el correo noreply de GitHub, y `gh repo create Xalcker/NGBand --public`.
+  `docs/paridad-ngband.md` y `docs/paridad-propuesta.md` quedaron fuera (`.git/info/exclude`): la paridad vive
+  solo en NESBand. Se pueden borrar.
 
 ## Sesión 3 (2026-10-30, noche): por qué el bot fallaba y qué se arregló
 
@@ -116,23 +135,17 @@ en el WAV.
 
 ## Pendientes, en orden sugerido
 
-1. **Rendimiento (37 casos fallan por cuadros perdidos).** Con 2 jugadores se pierde ~40% (VS/Co-Op: 2800-7200
-   cuadros); batería ~245; bajo/teclado 50-100; guitarra experto ~27; fácil 4. En 1 jugador cada cuadro va justo
-   (idle ≈ 0): lo que más pesa es `spr_flush`/`spr_set` (~6-10K instrucciones), `hwy_build`/`admit` y el ISR que
-   vacía la cola de VRAM. Para perfilar: traza con `-debug -debugger none` durante el juego del bot (envolver
-   `tests/autoplay.lua` con `dofile` y `dbg:command("trace ...")`) y separar por entrada a `rom_callback_VBlank`.
-   Ideas: no rehacer/rediferenciar sprites que no se movieron, escribir sin cola los sprites del Highway que
-   cambian todos los cuadros, menos filas/gemas visibles con 2 jugadores.
-2. **Récord que no sobrevive al apagar** (`demo-record-persiste`): se guarda (se ve `NGBR` y `BOT` en
-   `build/test-nvram-records/neogeo/saveram`) pero al principio de la backup RAM (0xD00000), que en el MVS es de
-   la BIOS (su firma y sus datos; puede reinicializarla al arrancar). Lo correcto en Neo Geo: la cabecera del
-   cartucho apunta a un bloque de RAM de trabajo y la BIOS lo guarda y restaura. Revisar qué ofrece ngdevkit.
-3. **Practice** (`marcha-practica`): el bot no ve vueltas (`vueltas None`); revisar `bot.log` del caso.
-4. **Bot humano:** pierde 0% en experto (debe rondar 45%): ajustar `HUMAN` en `tests/autoplay.lua`.
-5. **Sprite suelto en la pantalla de resultados** (un tile rojo arriba, sigue el carril de la última Note;
-   probablemente la primera pieza del rayo). La sombra lo da por oculto.
+1. **Sincronía audio/Chart con fallos** (14 casos, 2-4 cuadros pasajeros; 7-10 con 2 jugadores): MUTE/UNMUTE y
+   SFX son de 2 bytes y la cola (`AC_QUEUE_SIZE` 16, un byte por VBlank) se atrasa o se llena. Ideas: cola más
+   grande, mandar los FRAME antes que los silencios, juntar MUTE+UNMUTE del mismo instrumento.
+2. **2 jugadores:** VS pierde ~45 cuadros, Co-Op que cae ~160. Perfilar como en la sesión 3.
+3. **Récord que no sobrevive al apagar** (`demo-record-persiste`): se guarda al inicio de la backup RAM
+   (0xD00000), que en el MVS es de la BIOS. Usar el bloque que la BIOS guarda y restaura (cabecera del cartucho).
+4. **Practice** (`marcha-practica`: el bot no ve vueltas) y **bot humano** (pierde 0% en experto).
+5. **Pista:** ajustar colores/franjas a gusto; el poder estelar podría cambiar la paleta de la pista
+   (`GFX_PISTA_PAL`); las líneas de tiempo, si vuelven, mejor dentro del arte que con sprites.
 6. **Escuchar el audio con oído**; **hardware real**. La paridad vive solo en `../NESBand/docs/paridad.md`
-   (columna NG, actualizada el 2026-10-30); actualízala ahí al terminar cada mejora.
+   (columna NG); actualízala ahí al terminar cada mejora.
 
 ## Cuidado
 
@@ -144,6 +157,5 @@ en el WAV.
   y escriben en las mismas carpetas `build/test-*`; los resultados salen mezclados.
 - `g_audio.desync_count` solo cuenta con `-DNGBAND_DEBUG`; sin eso el arnés siempre ve 0 desincronías.
 
-- NGBand no es un repositorio git todavía, así que `./build.sh --release` se niega.
 - `build/` se borra y regenera en cada `./build.sh`. Los scripts de MAME viven en `tests/mame/`.
 - Las direcciones de RAM cambian en cada compilación: léelas siempre de `build/ngband.sym`.
