@@ -12,6 +12,13 @@ pasan. En `tests/run_tests.sh` (`-DNGBAND_DEBUG`): **34 de 55 casos pasan**, 0 d
 aciertan todo en todos los modos. Lo que falla: sincronía audio/Chart con fallos (14), 2 jugadores (cuadros
 perdidos), récord tras apagar, Practice y la calibración del bot humano.
 
+## Sesión 5 (2026-10-30): bandcore
+
+- `pctools/ngband_tools/vgm.py` ahora lee con **bandcore** (repo hermano en `../bandcore`, dependencia de uv por
+  ruta): el lector genérico de VGM que comparten GENBand y NGBand. Entrega lo mismo que antes (se comprobó con una
+  huella de los 10 VGM de `audio/`) y las pruebas del host pasan igual (128, 123 saltadas en Windows).
+- `uv run band inspect archivo.vgz` (desde `../bandcore`) dice qué chips usa un VGM y para qué juego sirve.
+
 ## Sesión 4 (2026-10-30): pista fija y repositorio
 
 - **Pista fija** (`src/track.c`, arte en `gfx.py` `draw_track`): trapecio de 14 columnas x 10 tiles con la
@@ -79,6 +86,7 @@ perdidos), récord tras apagar, Practice y la calibración del bot humano.
 brew tap dciabrin/ngdevkit && brew trust dciabrin/ngdevkit && brew install ngdevkit   # GCC m68k, romtool, BIOS libre
 brew install sdcc        # el SDCC de ngdevkit NO trae cc1 (no compila C); el driver Z80 usa este
 brew install mame uv pkg-config
+git clone https://github.com/Xalcker/bandcore.git ../bandcore   # lector de VGM compartido (dependencia de uv)
 ```
 
 - `m68k-neogeo-elf-gcc` y `pkg-config --cflags/--libs ngdevkit` (crt0, cabecera de ROM, `rom_callback_VBlank`).
