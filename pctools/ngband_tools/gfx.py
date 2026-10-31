@@ -161,6 +161,38 @@ def gem_palette(rgb: tuple[int, int, int]) -> list[int]:
     return cols
 
 
+# Piezas de la autopista con la paleta de la gema (la del carril): la cola es una barra continua (se encoge
+# a lo ancho y se estira a lo alto, así que el tile entero es cuerpo), el bombo una banda que se repite de lado
+# sin cortes y el platillo un rombo.
+def draw_tail() -> bytes:
+    px = []
+    for _ in range(16):
+        for x in range(16):
+            px.append(GEM_OUTLINE if x in (0, 15) else GEM_LIGHT if 6 <= x <= 8 else GEM_BODY)
+    return bytes(px)
+
+
+def draw_kick() -> bytes:
+    px = []
+    for y in range(16):
+        for _ in range(16):
+            px.append(0 if y < 4 or y > 11 else GEM_OUTLINE if y in (4, 11) else GEM_LIGHT if y == 5 else
+                      GEM_SHADE if y == 10 else GEM_BODY)
+    return bytes(px)
+
+
+def draw_cymbal() -> bytes:
+    px = []
+    for y in range(16):
+        for x in range(16):
+            d = abs(x - 7.5) / 7.5 + abs(y - 7.5) / 7.5
+            px.append(0 if d > 1 else GEM_OUTLINE if d > 0.8 else GEM_LIGHT if y < 6 else GEM_BODY)
+    return bytes(px)
+
+
+HWY_PIECES = (("COLA", draw_tail), ("BOMBO", draw_kick), ("ROMBO", draw_cymbal))
+
+
 # --- Arte dibujado aquí: escenario (R11.1) -----------------------------------------------------------
 # Las 10 paletas del escenario comparten los colores fijos (0..11) y cambian solo los de luz (12..15):
 #   fase 0..3 (cian, rojo, amarillo, violeta) x {tenue, latido} = 0..7;  8 = luces apagadas;  9 = destello.
@@ -326,9 +358,19 @@ def track_palette() -> list[int]:
     return cols
 
 
-def draw_track(phase: int, persp: list[PerspRow] | None = None) -> Tile:
-    """La superficie en la fase `phase` (0..7); las franjas bajan TRACK_PERIOD / 8 px por fase."""
+# Variantes de la pista: (nombre, carril del Chart de cada columna, para el color del aro). Como en NESBand, se
+# dibujan siempre los 5 carriles aunque fácil y medio usen 3 o 4. Con ESPEJO el Judge invierte solo los carriles
+# en uso (options_mirror_ev), así que cada cantidad tiene su orden de aros. La batería tiene 4 pads (drum_cols de
+# highway_layout.c) y el bombo como barra.
+TRACK_VARIANTS = (("PISTA", (0, 1, 2, 3, 4)), ("PISTA_E3", (2, 1, 0, 3, 4)), ("PISTA_E4", (3, 2, 1, 0, 4)),
+                  ("PISTA_E5", (4, 3, 2, 1, 0)), ("PISTA_BAT", (1, 2, 3, 0)))
+
+
+def draw_track(phase: int, persp: list[PerspRow] | None = None, lanes: tuple[int, ...] = (0, 1, 2, 3, 4)) -> Tile:
+    """La superficie en la fase `phase` (0..7) con un carril por columna de `lanes` (el carril del Chart de cada
+    columna, para el color del aro); las franjas bajan TRACK_PERIOD / 8 px por fase."""
     rows = {r.y: r for r in (persp or build_persp())}
+    ncols = len(lanes)
     t = Tile(TRACK_COLS * 16, TRACK_ROWS * 16)
     step = TRACK_PERIOD // TRACK_PHASES
     for py in range(t.h):
@@ -336,20 +378,22 @@ def draw_track(phase: int, persp: list[PerspRow] | None = None) -> Tile:
         r = rows.get(y)
         if r is None:
             continue
-        x0 = X_CENTER - r.width / 2
-        x1 = X_CENTER + r.width / 2
+        lane_w = r.width / NUM_LANES
+        x0 = X_CENTER - lane_w * ncols / 2
+        x1 = X_CENTER + lane_w * ncols / 2
         light = ((y - Y_HIT - step * phase) % TRACK_PERIOD) < TRACK_PERIOD // 2
         for px in range(t.w):
             x = TRACK_X0 + px
             if x0 <= x <= x1:
                 t.set(px, py, TRK_STRIPE if light else TRK_SURF)
-        for i in range(1, NUM_LANES):
-            t.set(round(x0 + r.width * i / NUM_LANES) - TRACK_X0, py, TRK_LANE)
+        for i in range(1, ncols):
+            t.set(round(x0 + lane_w * i) - TRACK_X0, py, TRK_LANE)
         for xe in (x0, x1):
             t.set(round(xe) - TRACK_X0, py, TRK_EDGE)
             t.set(round(xe) - TRACK_X0 + (1 if xe == x0 else -1), py, TRK_EDGE)
     hit = rows[Y_HIT]
-    for lane, cx in enumerate(hit.x_lane):
+    for col, lane in enumerate(lanes):
+        cx = round(X_CENTER + (col - (ncols - 1) / 2) * hit.width / NUM_LANES)
         for dy in range(-RING_RY, RING_RY + 1):
             for dx in range(-RING_RX, RING_RX + 1):
                 d = (dx / RING_RX) ** 2 + (dy / RING_RY) ** 2
@@ -359,9 +403,9 @@ def draw_track(phase: int, persp: list[PerspRow] | None = None) -> Tile:
     return t
 
 
-def track_tiles(persp: list[PerspRow] | None = None) -> list[bytes]:
+def track_tiles(persp: list[PerspRow] | None = None, lanes: tuple[int, ...] = (0, 1, 2, 3, 4)) -> list[bytes]:
     """Tiles de la pista: por columna y fila, las 8 fases seguidas (la autoanimación cambia los 3 bits bajos)."""
-    phases = [draw_track(p, persp) for p in range(TRACK_PHASES)]
+    phases = [draw_track(p, persp, lanes) for p in range(TRACK_PHASES)]
     out = []
     for c in range(TRACK_COLS):
         for r in range(TRACK_ROWS):
@@ -517,6 +561,11 @@ def build(assets: Path = ASSETS, sprite_base: int = 0, font_file: Path | None = 
     for name, rgb in (*LANE_COLORS.items(), ("estelar", STAR_COLOR)):
         sprites.append(SpriteArt(f"GEM_{_ident(name)}", gem_tiles[0], 1, GEM_LEVELS, len(palettes)))
         palettes.append(gem_palette(rgb))
+    # cola, bombo y rombo (si assets/gfx no trae su propio PNG con ese nombre)
+    gfx_dir = assets / "gfx"
+    for name, fn in HWY_PIECES:
+        if not (gfx_dir / f"{name.lower()}.png").exists():
+            sprites.append(SpriteArt(name, add_tiles([fn()]), 1, 1, len(palettes) - 1))
     # escenario: una paleta base y 9 más (ver stage_palettes); cada arte lleva sus tiles de columna
     stage_pal = len(palettes)
     palettes.extend(stage_palettes())
@@ -526,10 +575,10 @@ def build(assets: Path = ASSETS, sprite_base: int = 0, font_file: Path | None = 
     # pista fija: el primer tile en múltiplo de 8 (la autoanimación reemplaza los 3 bits bajos del tile)
     while (sprite_base + len(c1) // 64) % TRACK_PHASES:
         add_tiles([bytes(256)])
-    sprites.append(SpriteArt("PISTA", add_tiles(track_tiles()), TRACK_COLS, TRACK_ROWS, len(palettes)))
+    for name, lanes in TRACK_VARIANTS:
+        sprites.append(SpriteArt(name, add_tiles(track_tiles(lanes=lanes)), TRACK_COLS, TRACK_ROWS, len(palettes)))
     palettes.append(track_palette())
     # PNG de assets/gfx, en orden alfabético
-    gfx_dir = assets / "gfx"
     for path in sorted(gfx_dir.glob("*.png")) if gfx_dir.is_dir() else []:
         cols, nrows, tiles, pal = png_to_sprite(path)
         sprites.append(SpriteArt(_ident(path.stem), add_tiles(tiles), cols, nrows, len(palettes)))

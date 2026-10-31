@@ -122,8 +122,8 @@ def test_cli_gfx_outputs_and_determinism(tmp_path):
     files = ["gfx_c1.bin", "gfx_c2.bin", "gfx_s.bin", "gfx_data.c", "gfx_data.h"]
     for f in files:
         assert (tmp_path / "o1" / f).read_bytes() == (tmp_path / "o2" / f).read_bytes()
-    before_track = gfx.GEM_LEVELS + STAGE_TILES
-    track = gfx.TRACK_COLS * gfx.TRACK_ROWS * gfx.TRACK_PHASES
+    before_track = gfx.GEM_LEVELS + len(gfx.HWY_PIECES) + STAGE_TILES
+    track = gfx.TRACK_COLS * gfx.TRACK_ROWS * gfx.TRACK_PHASES * len(gfx.TRACK_VARIANTS)
     assert len(r.c1) == len(r.c2) == 64 * (before_track + (-before_track) % 8 + track + 2)
     assert "#define GFX_LOGO_ROWS 2" in (tmp_path / "o1" / "gfx_data.h").read_text()
     assert "PerspRow persp[PERSP_ROWS]" in (tmp_path / "o1" / "gfx_data.c").read_text()
@@ -147,9 +147,10 @@ def test_track_art_phases_and_alignment():
     """Pista fija: tiles alineados a 8 (autoanimación), franjas que bajan PERIOD/8 px por fase y aros en la línea
     de golpe con el color de cada carril."""
     r = gfx.build()
-    pista = next(s for s in r.sprites if s.name == "PISTA")
-    assert pista.first_tile % gfx.TRACK_PHASES == 0
-    assert (pista.cols, pista.rows) == (gfx.TRACK_COLS, gfx.TRACK_ROWS)
+    for name, _ in gfx.TRACK_VARIANTS:
+        pista = next(s for s in r.sprites if s.name == name)
+        assert pista.first_tile % gfx.TRACK_PHASES == 0
+        assert (pista.cols, pista.rows) == (gfx.TRACK_COLS, gfx.TRACK_ROWS)
     a, b = gfx.draw_track(0), gfx.draw_track(1)
     step = gfx.TRACK_PERIOD // gfx.TRACK_PHASES
     x = gfx.X_CENTER - gfx.TRACK_X0 - 30           # dentro del carril 1, lejos de los divisores
@@ -158,3 +159,19 @@ def test_track_art_phases_and_alignment():
     hit = {p.y: p for p in r.persp}[gfx.Y_HIT]
     for lane, cx in enumerate(hit.x_lane):
         assert a.px[gfx.Y_HIT - gfx.TRACK_Y0 - gfx.RING_RY][cx - gfx.TRACK_X0] == gfx.TRK_RING + lane
+
+
+def test_track_lanes_match_gem_columns():
+    """Los divisores y los aros caen donde el juego pone las gemas: `ncols` columnas centradas separadas por un
+    quinto del ancho (highway_layout.c, col_x); con 3 y 4 carriles la pista es más angosta."""
+    hit = {p.y: p for p in gfx.build_persp()}[gfx.Y_HIT]
+    lane_w = hit.width / gfx.NUM_LANES
+    for _, lanes in gfx.TRACK_VARIANTS:
+        img = gfx.draw_track(0, lanes=lanes)
+        n = len(lanes)
+        for col, lane in enumerate(lanes):
+            gem_x = round(gfx.X_CENTER + (2 * col - (n - 1)) * (4 * lane_w) / 8)   # col_x con span = 4 carriles
+            ring_top = gfx.Y_HIT - gfx.RING_RY - gfx.TRACK_Y0
+            assert img.px[ring_top][gem_x - gfx.TRACK_X0] == gfx.TRK_RING + lane
+        edge = round(gfx.X_CENTER + lane_w * n / 2) + 3 - gfx.TRACK_X0          # afuera del borde derecho
+        assert img.px[gfx.Y_HIT - gfx.TRACK_Y0][edge] == 0

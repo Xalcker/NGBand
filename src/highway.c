@@ -25,6 +25,11 @@ _Static_assert(HWY_LANES == 5, "la tabla de perspectiva tiene 5 carriles");
 #else
 #define LINE_TILE gem_tile[GEM_LEVELS - 1]
 #endif
+#ifdef GFX_BOMBO_TILE
+#define KICK_TILE GFX_BOMBO_TILE
+#else
+#define KICK_TILE 0
+#endif
 #ifdef GFX_ROMBO_TILE
 #define CYMBAL_TILE GFX_ROMBO_TILE
 #else
@@ -51,6 +56,7 @@ static void geom_init(void)
   s_geom.x_center = persp[s_geom.hit_row].x_lane[2];
   s_geom.cymbal_tile = (u16)(CYMBAL_TILE);
   s_geom.tail_tile = (u16)(TAIL_TILE);
+  s_geom.kick_tile = (u16)(KICK_TILE);
   s_geom.line_tile = (u16)(LINE_TILE);
   s_geom.lane_pal[0] = GFX_GEM_VERDE_PAL;
   s_geom.lane_pal[1] = GFX_GEM_ROJO_PAL;
@@ -78,7 +84,7 @@ void highway_view_init(HwyView *v, u8 player, u8 nplayers, u8 difficulty, bool d
   v->nplayers = nplayers ? nplayers : 1;
   v->drums = drums;
   v->expert = difficulty == 3;
-  v->ncols = drums ? 4 : lanes;
+  v->ncols = drums ? 4 : HWY_LANES;   /* como en NESBand: siempre 5 carriles; fácil y medio usan los primeros */
   v->lane_mask = drums ? 0x1F : (u8)((1u << lanes) - 1u);
   v->fall_frames = highway_fall_frames(difficulty);
   if (v->nplayers == 1) {

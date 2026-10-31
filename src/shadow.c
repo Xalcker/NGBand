@@ -269,9 +269,10 @@ void shadow_silence_all(ShadowRegs *s)
   s->reg[0][0x07] = 0xFF;
   s->write(0, 0x07, 0xFF);
   for (i = 0x08; i <= 0x0A; i++) s->write(0, i, 0);
-  /* ADPCM-A: dump de los 6 canales; ADPCM-B: reset. */
+  /* ADPCM-A: dump de los 6 canales; ADPCM-B: reset (bit 0) y luego nada (0x80 sería START: tocaría la ROM V). */
   s->write(1, 0x00, 0xBF);
-  s->write(0, 0x10, 0x80);
+  s->write(0, 0x10, 0x01);
+  s->write(0, 0x10, 0x00);
 }
 
 void shadow_song_start(ShadowRegs *s, u8 index)

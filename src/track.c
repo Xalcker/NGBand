@@ -16,6 +16,17 @@
 _Static_assert(GFX_PISTA_COLS <= PER_PLAYER, "la pista no cabe en los sprites reservados");
 _Static_assert(GFX_PISTA_TILE % GFX_PISTA_PHASES == 0, "la autoanimación necesita tiles alineados a 8");
 
+/* La variante de la pista (gfx.py, TRACK_VARIANTS): 5 carriles siempre; con ESPEJO, el orden de los aros según
+ * cuántos carriles usa la Difficulty; la batería, con sus 4 pads. */
+static u16 track_tile(const HwyView *w)
+{
+  u8 n = 0, m;
+  if (w->drums) return GFX_PISTA_BAT_TILE;
+  if (!w->mirror) return GFX_PISTA_TILE;
+  for (m = w->lane_mask; m & 1; m >>= 1) n++;
+  return n <= 3 ? GFX_PISTA_E3_TILE : n == 4 ? GFX_PISTA_E4_TILE : GFX_PISTA_E5_TILE;
+}
+
 static u16 s_anim;      /* REG_LSPCMODE con la pista en marcha */
 
 static void push(u16 addr, u16 val)
@@ -37,6 +48,7 @@ void track_show(const HwyView *views, u8 nviews, u8 speed_idx)
   g_vq_lock = 1;
   for (v = 0; v < nviews && v < 2; v++) {
     const HwyView *w = &views[v];
+    const u32 base = track_tile(w);
     const u8 hs = (u8)((16 * w->xscale + 128) / 256 - 1);   /* ancho de columna - 1 */
     for (c = 0; c < PER_PLAYER; c++) {
       const u16 spr = (u16)(SPR_TRACK_BASE + v * PER_PLAYER + c);
@@ -44,7 +56,7 @@ void track_show(const HwyView *views, u8 nviews, u8 speed_idx)
       /* X de la columna: la de 1 jugador escalada alrededor del centro del Highway */
       s16 x = (s16)(w->x_origin + ((s32)(GFX_PISTA_X0 + c * 16 - 160) * w->xscale) / 256);
       for (r = 0; r < GFX_PISTA_ROWS; r++) {
-        const u32 tile = (u32)GFX_PISTA_TILE + ((u32)c * GFX_PISTA_ROWS + r) * GFX_PISTA_PHASES;
+        const u32 tile = base + ((u32)c * GFX_PISTA_ROWS + r) * GFX_PISTA_PHASES;
         push((u16)(VRAM_SCB1 + spr * 64 + r * 2), (u16)tile);
         push((u16)(VRAM_SCB1 + spr * 64 + r * 2 + 1),
              (u16)((GFX_PISTA_PAL << 8) | (((tile >> 16) & 0xF) << 4) | SCB1_ANIM8));

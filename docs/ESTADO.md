@@ -26,6 +26,17 @@ perdidos), récord tras apagar, Practice y la calibración del bot humano.
   pausa. Periodo de 32 px en Y, lineal como el movimiento de las gemas (`row_of`).
 - **Sin líneas de tiempo con sprites** (`beat_frames = 0` en `play.c`): usaban el tile de la gema y se veían como
   bloques; quitarlas bajó los cuadros perdidos (VS de 2847 a ~45, fácil de 4 a 1).
+- **5 carriles siempre** (como NESBand): `highway_view_init` pone `ncols = 5` (batería: 4) y fácil/medio usan los
+  primeros 3/4; antes se centraban 3 o 4 columnas y las gemas no caían en los carriles de la pista. Con ESPEJO se
+  invierten solo los carriles en uso (`lane_col`, igual que `options_mirror_ev`). La pista tiene 5 variantes
+  (`TRACK_VARIANTS` en gfx.py: normal, espejo con 3/4/5 carriles y batería) y `track.c` elige por vista.
+- **Cola, bombo y platillo con arte propio** (`HWY_PIECES` en gfx.py): la cola es una barra continua y el bombo
+  una banda; antes se apilaba el tile de la gema. Pendiente: la cola se ve unos px a la derecha de la gema.
+- **Audio comparado contra la referencia** (`ngplayer.js`, el reproductor del editor): misma afinación (0 cents),
+  mismo balance por bandas y tempo estable (1418 de 1440 VBlanks aplican 1 cuadro; 11 veces 0 y luego 2). El driver
+  toca lo que dice el stream; si la música "suena mal", es el arreglo o los patches FM de las canciones
+  (convertidas de FamiStudio, 4 canales FM, la batería en FM 4), no el Z80. Se corrigió el reset del ADPCM-B
+  (escribía 0x80 = START en el registro 0x10). WAVs para comparar de oído: `build/audiocmp/ref.wav` y `mame.wav`.
 - **Git:** `git init`, autor `Xalcker` con el correo noreply de GitHub, y `gh repo create Xalcker/NGBand --public`.
   `docs/paridad-ngband.md` y `docs/paridad-propuesta.md` quedaron fuera (`.git/info/exclude`): la paridad vive
   solo en NESBand. Se pueden borrar.

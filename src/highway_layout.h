@@ -48,6 +48,7 @@ typedef struct {
   s16 x_center;              /* centro X con el que se generó la tabla */
   u16 cymbal_tile;           /* rombo de platillo (experto) */
   u16 tail_tile;
+  u16 kick_tile;             /* banda del bombo (se repite de lado) */
   u16 line_tile;
   u8  lane_pal[HWY_LANES];   /* paleta de cada carril del Chart (verde, rojo, amarillo, azul, naranja) */
   u8  star_pal;              /* gemas estelares */
@@ -59,10 +60,10 @@ typedef struct {
 typedef struct {
   u8  player;        /* 0 o 1 */
   u8  nplayers;      /* 1 o 2: divide el presupuesto y el SpritePool (R5.10) */
-  u8  ncols;         /* columnas: 3, 4 o 5 según la Difficulty; 4 en batería (R4.2) */
+  u8  ncols;         /* columnas: 5 (fácil y medio usan las primeras 3 o 4); 4 en batería (R4.2) */
   bool drums;
   bool expert;       /* batería: platillos como rombos (R4.4) o toms (R4.5) */
-  bool mirror;       /* ESPEJO: lane -> ncols-1-lane, salvo batería (R8.2) */
+  bool mirror;       /* ESPEJO: lane -> n-1-lane con n = carriles de lane_mask, salvo batería (R8.2) */
   bool star_active;  /* Star_Power: colas y líneas azules */
   u8  lane_mask;     /* carriles del Chart que la Difficulty usa */
   u8  fall_frames;   /* cuadros por cada 8 px: 6, 5, 4 o 3 (R5.8) */

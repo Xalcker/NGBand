@@ -101,7 +101,13 @@ static int lane_col(const HwyView *v, u8 lane)
 {
   if (v->drums) return lane < HWY_LANES ? drum_cols[lane] : -1;
   if (lane >= v->ncols) return -1;
-  return v->mirror ? (int)v->ncols - 1 - lane : lane;
+  if (v->mirror) {   /* ESPEJO invierte solo los carriles que la Difficulty usa (como options_mirror_ev) */
+    int n = 0;
+    u8 m;
+    for (m = v->lane_mask; m & 1; m >>= 1) n++;
+    if (lane < n) return n - 1 - lane;
+  }
+  return lane;
 }
 
 static s32 span_of(const HwyRow *r) { return (s32)r->x_lane[4] - r->x_lane[0]; }
@@ -186,7 +192,8 @@ static void add_kick(HwyList *l, const HwyGeom *g, const HwyView *v, s32 row)
   if (n > HWY_MAX_BAR_SPR) n = HWY_MAX_BAR_SPR;
   left = center_x(g, v, r) - (n * w) / 2;
   for (i = 0; i < n; i++)
-    admit(l, v, HWY_CLS_GEM, (s16)(left + i * w), (s16)((s32)r->y - h / 2), g->gem_tile[level],
+    admit(l, v, HWY_CLS_GEM, (s16)(left + i * w), (s16)((s32)r->y - h / 2),
+          g->kick_tile ? g->kick_tile : g->gem_tile[level],
           g->lane_pal[KICK_LANE], hs, vs);
 }
 
