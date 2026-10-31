@@ -4,7 +4,7 @@ Un VGM guarda la música como escrituras a los registros del chip con esperas en
 Aquí se lee `.vgm` o `.vgz` (el mismo formato comprimido con gzip, con el lector genérico de bandcore) y se saca:
 
   - las escrituras del YM2610 con su instante (`Write`; chip "ym0" = puerto A, VGM `0x58`; "ym1" = puerto B, `0x59`);
-  - los bloques de datos de ADPCM-A (tipo `0x81`) y ADPCM-B (tipo `0x82`);
+  - los bloques de datos de ADPCM-A (tipo `0x82`) y ADPCM-B (tipo `0x83`);
   - el bucle, la duración y las etiquetas GD3;
   - la lista de comandos que no se entienden (`Vgm.unsupported`): se informan y se sigue con lo demás.
 
@@ -25,8 +25,9 @@ SAMPLES_PER_FRAME = 735  # 44100 / 60
 YM_CLOCK_DEFAULT = 8_000_000  # reloj del YM2610 si el VGM no lo trae
 
 # Tipos de bloque de datos (comando $67) del YM2610
-BLOCK_ADPCM_A = 0x81
-BLOCK_ADPCM_B = 0x82
+# (los de la especificación de VGM: $81 es el DELTA-T del YM2608; se comprobó con los VGM de Metal Slug)
+BLOCK_ADPCM_A = 0x82
+BLOCK_ADPCM_B = 0x83
 
 
 @dataclass(frozen=True)

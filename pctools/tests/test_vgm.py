@@ -50,15 +50,19 @@ def test_loop_and_unrolled_writes():
 
 
 def test_adpcm_blocks_and_unsupported_commands():
+    # Tipos de la especificación de VGM: $82 = ADPCM-A del YM2610, $83 = su ADPCM-B (DELTA-T); $81 es del YM2608
     payload = struct.pack("<II", 16, 4) + b"\xAA\xBB"
-    block = bytes([0x67, 0x66, 0x81]) + struct.pack("<I", len(payload)) + payload
-    other = bytes([0x67, 0x66, 0x00]) + struct.pack("<I", 2) + b"\x01\x02"
-    body = block + other + bytes([0x52, 0x2A, 0x10, 0x58, 0x07, 0x00])
+    block = bytes([0x67, 0x66, 0x82]) + struct.pack("<I", len(payload)) + payload
+    payload_b = struct.pack("<II", 8, 0) + b"\xCC"
+    block_b = bytes([0x67, 0x66, 0x83]) + struct.pack("<I", len(payload_b)) + payload_b
+    other = bytes([0x67, 0x66, 0x81]) + struct.pack("<I", 2) + b"\x01\x02"
+    body = block + block_b + other + bytes([0x52, 0x2A, 0x10, 0x58, 0x07, 0x00])
     vgm = parse_vgm(make_vgm(body))
     rom = vgm.rom("adpcma")
     assert len(rom) == 16 and rom[4:6] == b"\xAA\xBB"
-    assert vgm.rom("adpcmb") == b""
+    assert vgm.rom("adpcmb") == b"\xCC" + bytes(7)
     assert len(vgm.unsupported) == 2 and any("$52" in u for u in vgm.unsupported)
+    assert any("$81" in u for u in vgm.unsupported)
 
 
 @pytest.mark.parametrize("raw", [b"", b"nope" * 20, make_vgm(b"\x62"), make_vgm(b"\x58\x00")[:0x52]])

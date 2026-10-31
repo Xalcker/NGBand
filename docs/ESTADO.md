@@ -33,6 +33,10 @@ perdidos), récord tras apagar, Practice y la calibración del bot humano.
   (su formato parte también los saltos de 255 exactos), lo de `song.c` y la agrupación de golpes del ADPCM.
   `ngband reimport` de las 10 canciones da los mismos archivos que antes. Los `song.c` se regeneraron una vez para que
   la línea vacía que movía `songgen.py` deje de aparecer como cambio.
+- **Primer VGM comercial (Metal Slug, Stage 1):** importa y suena en el reproductor del editor. Destapó un error: los
+  bloques de datos de ADPCM se leían con los tipos corridos ($81/$82); la especificación de VGM dice $82 = ADPCM-A y
+  $83 = ADPCM-B (los VGM de Metal Slug traen 1.4 MB de ADPCM-A en $82). Corregido en `vgm.py`. Los VGM propios de
+  NGBand no traen bloques, por eso no se había notado. Falta compilar una ROM con un VGM comercial y oírla en MAME.
 
 ## Sesión 4 (2026-10-30): pista fija y repositorio
 
