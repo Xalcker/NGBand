@@ -171,9 +171,10 @@ def test_editor_page_is_complete(server):
     page = _get(url + "/")
     assert not re.findall(r"__(?:DATA|MENU|NGPLAYER)__", page)  # sin marcadores sin reemplazar
     assert "const DATA = {" in page and "const NgPlayer" in page and "filemenu" in page
+    # Los canales llegan en el perfil (JSON) de la página compartida de bandcore
     for channel in ("ssg3", "adpcma", "adpcmb"):
-        assert f'id: "{channel}"' in page
-    assert 'id: "dac"' not in page and "GenPlayer" not in page and "genband" not in page.lower()
+        assert f'"id":"{channel}"' in page
+    assert '"id":"dac"' not in page and "GenPlayer" not in page and "genband" not in page.lower()
 
 
 @pytest.mark.skipif(shutil.which("node") is None, reason="Node.js no está instalado")
@@ -196,7 +197,8 @@ def test_home_page_without_song(root):
     try:
         page = _get(f"http://127.0.0.1:{srv.server_address[1]}/")
         assert '"home":true' in page and "dlgOpen" in page and "No hay ninguna canción abierta" in page
-        assert "dlgNew" not in page and "NgPlayer" not in page
+        # Sin importador en el editor: el perfil lo dice y el menú no ofrece «Nueva canción»
+        assert '"import":null' in page and "NgPlayer" not in page
     finally:
         srv.shutdown()
         srv.server_close()

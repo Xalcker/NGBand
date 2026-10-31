@@ -18,6 +18,10 @@ perdidos), récord tras apagar, Practice y la calibración del bot humano.
   ruta): el lector genérico de VGM que comparten GENBand y NGBand. Entrega lo mismo que antes (se comprobó con una
   huella de los 10 VGM de `audio/`) y las pruebas del host pasan igual (128, 123 saltadas en Windows).
 - `uv run band inspect archivo.vgz` (desde `../bandcore`) dice qué chips usa un VGM y para qué juego sirve.
+- Las páginas del editor de charts (editor.html, home.html, menú) ahora son las de **bandcore**, iguales en los cuatro
+  juegos; `editor.py` solo pone el perfil de la Neo Geo (`PROFILE`) y el adaptador de `ngplayer.js`. Se probó en Chrome
+  sin ventana: la página abre, Escuchar suena y avanza, las teclas silencian canales y la de inicio no ofrece
+  «Nueva canción» (NGBand importa por línea de comandos).
 
 ## Sesión 4 (2026-10-30): pista fija y repositorio
 

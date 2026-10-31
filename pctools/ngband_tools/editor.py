@@ -24,6 +24,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
 
+from bandcore import editor as bandeditor
+
 from . import drums as dr
 from . import songgen as sg
 from . import vgm as vgmlib
@@ -37,10 +39,45 @@ from .chartedit import (
     validate_chart,
 )
 
-HTML_PATH = Path(__file__).with_name("editor.html")
-HOME_PATH = Path(__file__).with_name("home.html")  # la página sin canción abierta
-MENU_PATH = Path(__file__).with_name("menu.html")  # el menú Archivo, compartido por las dos
+# Las páginas (editor.html, home.html y el menú Archivo) son las de bandcore, compartidas con NESBand, GBBand y
+# GENBand; aquí van el perfil de la Neo Geo y su reproductor
+HTML_PATH = bandeditor.EDITOR_HTML
+HOME_PATH = bandeditor.HOME_HTML  # la página sin canción abierta
 PLAYER_PATH = Path(__file__).with_name("ngplayer.js")  # Escuchar: el YM2610 en JavaScript
+
+PROFILE = {
+    "game": "NGBand",
+    "cli": "ngband",
+    "pads": ["←", "↓", "→", "B", "C"],
+    "channels": [
+        {"id": "fm1", "label": "FM 1", "color": "#58d0ff", "discrete": False},
+        {"id": "fm2", "label": "FM 2", "color": "#b58cff", "discrete": False},
+        {"id": "fm3", "label": "FM 3", "color": "#6be88a", "discrete": False},
+        {"id": "fm4", "label": "FM 4", "color": "#4fb8e8", "discrete": False},
+        {"id": "ssg1", "label": "SSG 1", "color": "#e8e070", "discrete": False},
+        {"id": "ssg2", "label": "SSG 2", "color": "#d0c860", "discrete": False},
+        {"id": "ssg3", "label": "SSG 3", "color": "#b8b050", "discrete": False},
+        {"id": "adpcma", "label": "ADPCM-A", "color": "#ff6b5e", "discrete": True, "pitchLabel": "sample"},
+        {"id": "adpcmb", "label": "ADPCM-B", "color": "#ffb45e", "discrete": True},
+    ],
+    "drumInstrument": False,  # los golpes del ADPCM no traen nombre de instrumento
+    "exportLabel": "Exportar song.c",
+    "exportTitle": "Guarda y vuelve a importar la canción: su song.c sale con los charts editados",
+    "playerTitle": "Toca la canción con el YM2610 emulado (FM, SSG y ADPCM)",
+    "import": None,  # se importa con ngband import-song
+}
+# ngplayer.js toca el Frame_Stream (en base64) con las ROM de samples ADPCM-A y ADPCM-B
+_PLAYER_ADAPTER = """
+window.BandPlayer = {
+  FPS: NgPlayer.FPS,
+  render(player, data, opts) {
+    const bytes = (b64) => Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    return NgPlayer.render(bytes(player.stream), player.frames, {
+      ...opts, clock: player.clock, adpcmaRom: bytes(player.adpcma), adpcmbRom: bytes(player.adpcmb),
+    });
+  },
+};
+"""
 
 SOURCE_SUFFIXES = (".vgm", ".vgz")
 SONG_NAME = re.compile(r"[a-z][a-z0-9_]*")
@@ -323,16 +360,9 @@ def open_song(app: App, name: str) -> None:
 
 
 def render_page(payload: dict, template: Path = HTML_PATH) -> str:
-    if not template.exists():
-        return ("<!doctype html><meta charset=utf-8><title>Editor de charts</title>"
-                f"<p>Falta la plantilla {template.name} (interfaz web). "
-                "Los datos están en <a href=/api/state>/api/state</a>.</p>")
-    data = json.dumps(payload, ensure_ascii=True, separators=(",", ":")).replace("</", "<\\/")
-    menu = MENU_PATH.read_text(encoding="utf-8") if MENU_PATH.exists() else ""
-    player = PLAYER_PATH.read_text(encoding="utf-8") if PLAYER_PATH.exists() else ""
-    page = template.read_text(encoding="utf-8")
-    # (los datos van al final: así nada de lo insertado antes puede contener otro marcador)
-    return page.replace("__NGPLAYER__", player, 1).replace("__MENU__", menu, 1).replace("__DATA__", data, 1)
+    """La página del editor de bandcore con el perfil de la Neo Geo."""
+    player = PLAYER_PATH.read_text(encoding="utf-8") + _PLAYER_ADAPTER
+    return bandeditor.render_page(payload, PROFILE, player, template)
 
 
 class Handler(BaseHTTPRequestHandler):
