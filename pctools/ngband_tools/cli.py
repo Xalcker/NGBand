@@ -24,6 +24,36 @@ def _cmd_list_songs(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_export_notes(args: argparse.Namespace) -> int:
+    """Las notas de un VGM en el formato de bandcore.notes, para arreglarlas en otra consola: los canales de
+    guitarra, teclado y bajo (los que elegiría import-song, o los que se pidan) y la batería con sus papeles."""
+    from bandcore import notes as bnotes
+
+    from . import drums as dr
+    from .songgen import OPTION_KEYS, drum_assignment, load_song
+    opts = {"name": "export", "source": str(Path(args.source).resolve())}
+    for key in OPTION_KEYS:
+        if getattr(args, key, None):
+            opts[key] = getattr(args, key)
+    try:
+        sd = load_song(opts)
+    except ValueError as exc:
+        print(f"ngband: {exc}", file=sys.stderr)
+        return 1
+    channels = {
+        slot: [[n.frame, n.duration, n.pitch, bnotes.DEFAULT_VOLUME] for n in sd.channel_notes(sd.assign.get(inst, []))]
+        for slot, inst in (("Square1", "guitarra"), ("Square2", "teclado"), ("Triangle", "bajo"))
+    }
+    assignment = drum_assignment(sd)
+    hits = [[h.frame, h.role, h.cymbal] for h in dr.drum_hits(sd.notes, sd.drums, assignment)] if assignment else []
+    data = bnotes.make(sd.title, sd.game, sd.stream_frames, channels, hits)
+    bnotes.write(data, Path(args.out))
+    used = ", ".join(f"{inst} {'+'.join(sd.assign.get(inst, []))}" for inst in ("guitarra", "teclado", "bajo"))
+    print(f"{args.out}: {sd.title} ({sd.game}), {sd.stream_frames / 60:.1f} s; {used}; "
+          f"batería {'+'.join(sd.drums)} ({len(hits)} golpes)")
+    return 0
+
+
 def _cmd_channels(args: argparse.Namespace) -> int:
     from .songgen import describe_channels
     try:
@@ -81,6 +111,15 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("source", help=".vgm o .vgz")
     p.add_argument("--duration", type=float, help="segundos (repite el bucle)")
     p.set_defaults(fn=_cmd_channels)
+    p = sub.add_parser("export-notes", help="saca las notas de un VGM a JSON (bandcore.notes) para arreglarlas en otra consola")
+    p.add_argument("source", help=".vgm o .vgz")
+    p.add_argument("--out", required=True)
+    p.add_argument("--title")
+    p.add_argument("--game")
+    p.add_argument("--duration", type=float, help="segundos (repite el bucle)")
+    for inst in ("guitarra", "teclado", "bajo", "bateria"):
+        p.add_argument(f"--{inst}", help=f"canal(es) del {inst}: fm1..fm4, ssg1..ssg3, adpcma, adpcmb")
+    p.set_defaults(fn=_cmd_export_notes)
     p = sub.add_parser("import-song", help="importa un VGM a src/songs/<nombre>/")
     p.add_argument("source", help=".vgm o .vgz")
     p.add_argument("--name", required=True, help="nombre de la carpeta (minúsculas, números y _)")
