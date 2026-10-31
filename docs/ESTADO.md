@@ -22,6 +22,9 @@ perdidos), récord tras apagar, Practice y la calibración del bot humano.
   juegos; `editor.py` solo pone el perfil de la Neo Geo (`PROFILE`) y el adaptador de `ngplayer.js`. Se probó en Chrome
   sin ventana: la página abre, Escuchar suena y avanza, las teclas silencian canales y la de inicio no ofrece
   «Nueva canción» (NGBand importa por línea de comandos).
+- `chartedit.py` y `ChartNote`, `check_playable`, `lanes_clash` y las parejas bloqueadas de `chart.py` ahora vienen de
+  bandcore (eran iguales en los cuatro juegos). `ngband reimport` de las 10 canciones da los mismos charts; solo mueve
+  una línea vacía en cada `song.c`, igual que con el código anterior (es de `songgen.py`, ya pasaba).
 
 ## Sesión 4 (2026-10-30): pista fija y repositorio
 

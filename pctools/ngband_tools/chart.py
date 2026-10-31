@@ -20,6 +20,16 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
+# La nota y las reglas de lo que se puede tocar son las mismas en los cuatro juegos: viven en bandcore
+from bandcore.chart import (  # noqa: F401  (se usan como chart.ChartNote, chart.BLOCKED_PAIRS...)
+    BLOCKED_PAIRS,
+    DRUM_BLOCKED_PAIRS,
+    STAR_PHRASE_LEN,
+    ChartNote,
+    check_playable,
+    lanes_clash,
+)
+
 ROLES = ("lead", "keys", "bass")
 KEYS_WINDOW = 6  # vecindario de notas (a cada lado) con el que el teclado reparte sus carriles (la guitarra usa 4)
 
@@ -154,7 +164,6 @@ def assign_lanes(notes: list[Note], lanes: int, window: int = 4) -> list[int]:
 
 
 STAR_FLAG = 0x20  # forma parte de una frase de Star_Power
-STAR_PHRASE_LEN = 4  # notas por frase (si aciertas todas, la barra sube 25)
 STAR_FIRST = 10  # índice de la primera nota de la primera frase
 STAR_SPACING = 24  # notas entre el inicio de una frase y el de la siguiente
 SUSTAIN_FLAG = 0x40  # la nota tiene cola (su fin va en otra entrada); en batería, platillo
@@ -163,15 +172,6 @@ LANE_MASK = 0x1F
 MIN_SUSTAIN = 16  # cuadros mínimos de cola
 SUSTAIN_TRIM = 4  # la cola termina un poco antes de que acabe la nota
 SUSTAIN_GAP = 3  # cuadros libres entre el fin de una cola y la siguiente nota del mismo carril
-
-
-@dataclass(frozen=True)
-class ChartNote:
-    frame: int  # cuadro en que suena (contando la entrada de la autopista)
-    mask: int  # bits 0-4 = carriles
-    end: int | None = None  # cuadro en que termina su cola (None = nota normal)
-    star: bool = False  # nota de una frase de Star_Power
-    cymbal: bool = False  # solo batería (sin colas): el pad es un platillo, no un tom
 
 
 def sustain_ends(notes: list[Note], lanes: list[int | tuple[int, ...]]) -> list[int | None]:
@@ -188,18 +188,6 @@ def sustain_ends(notes: list[Note], lanes: list[int | tuple[int, ...]]) -> list[
         length = limit - note.frame - SUSTAIN_TRIM
         ends.append(note.frame + length if length >= MIN_SUSTAIN else None)
     return ends
-
-
-# Verde = ←, amarillo = → (R6.1): no se pueden apretar a la vez (R6.2). Con ESPEJO (R8.2) verde↔naranja y
-# rojo↔azul, así que amarillo + naranja se volvería verde + amarillo: tampoco se piden juntos.
-BLOCKED_PAIRS = ({0, 2}, {2, 4})
-# En la batería el bombo (naranja) se pisa con el pie y ESPEJO no aplica: solo verde + amarillo es imposible.
-DRUM_BLOCKED_PAIRS = ({0, 2},)
-
-
-def lanes_clash(a: set[int], b: set[int], blocked=BLOCKED_PAIRS) -> bool:
-    """¿Dos notas con estos carriles no pueden estar activas a la vez? (mismo carril o pareja bloqueada)"""
-    return bool(a & b) or any({x, y} in blocked for x in a for y in b)
 
 
 def second_lane(lane: int, lanes: int, delta: int) -> int | None:
@@ -402,20 +390,3 @@ def chart_from_c(text: str, drums: bool = False) -> list[ChartNote]:
 def chart_buttons(chart: list[ChartNote]) -> int:
     """Notas del Chart como las cuenta el Judge: cada botón de un acorde es una Note (R2.4)."""
     return sum(bin(n.mask & LANE_MASK).count("1") for n in chart)
-
-
-def check_playable(chart: list[ChartNote], blocked=BLOCKED_PAIRS) -> None:
-    """Falla si el Chart pide algo imposible: carriles de una pareja bloqueada (verde y amarillo, y con ESPEJO
-    amarillo y naranja; en batería DRUM_BLOCKED_PAIRS) a la vez, en un acorde o tocando una nota mientras se
-    sostiene otra."""
-    sets = [set(mask_lanes(n.mask)) for n in chart]
-    for i, (note, lanes) in enumerate(zip(chart, sets)):
-        if any({x, y} in blocked for x in lanes for y in lanes):
-            raise ValueError(f"acorde imposible en el cuadro {note.frame}: carriles {sorted(lanes)}")
-        if note.end is None:
-            continue
-        for other, other_lanes in zip(chart[i + 1 :], sets[i + 1 :]):
-            if other.frame >= note.end:
-                break
-            if lanes_clash(other_lanes, lanes, blocked):
-                raise ValueError(f"la nota del cuadro {other.frame} cae mientras se sostiene la del {note.frame}")
