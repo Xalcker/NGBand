@@ -25,6 +25,9 @@ perdidos), récord tras apagar, Practice y la calibración del bot humano.
 - `chartedit.py` y `ChartNote`, `check_playable`, `lanes_clash` y las parejas bloqueadas de `chart.py` ahora vienen de
   bandcore (eran iguales en los cuatro juegos). `ngband reimport` de las 10 canciones da los mismos charts; solo mueve
   una línea vacía en cada `song.c`, igual que con el código anterior (es de `songgen.py`, ya pasaba).
+- El servidor del editor (rutas, App, Handler) es el de bandcore (`bandcore.editor.server`); `editor.py` define
+  `Game` con lo propio de la Neo Geo. `make_server(name, port, root)` y `App(sd, root)` siguen igual para las pruebas.
+  Probado en Chrome: abrir, Escuchar, Guardar y Exportar.
 
 ## Sesión 4 (2026-10-30): pista fija y repositorio
 

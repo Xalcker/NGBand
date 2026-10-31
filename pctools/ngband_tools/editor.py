@@ -15,16 +15,13 @@ ROM (R16.6). Si falta una plantilla, la página explica que no está y `/api/sta
 from __future__ import annotations
 
 import base64
-import json
 import re
-import threading
-import webbrowser
 from dataclasses import replace
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urlparse
 
 from bandcore import editor as bandeditor
+from bandcore.editor import server as bandserver
 
 from . import drums as dr
 from . import songgen as sg
@@ -32,7 +29,6 @@ from . import vgm as vgmlib
 from .chart import DIFFICULTIES, ChartNote, chart_size
 from .chartedit import (
     EDITS_FILE,
-    chart_from_json,
     chart_problems,
     diff_charts,
     save_edits,
@@ -321,15 +317,6 @@ def export_song(sd: sg.SongData, charts: dict[str, list[ChartNote]], assignment:
 # --- Canciones disponibles --------------------------------------------------------------------------------
 
 
-class App:
-    """La canción abierta (o ninguna) del servidor. Un candado evita que dos acciones se pisen."""
-
-    def __init__(self, sd: sg.SongData | None = None, root: Path = sg.ROOT):
-        self.sd = sd
-        self.root = root
-        self.lock = threading.RLock()
-
-
 def load_song_source(name: str, root: Path = sg.ROOT) -> sg.SongData:
     if not SONG_NAME.fullmatch(name) or not (root / "src" / "songs" / name / "import.json").exists():
         raise ValueError(f"{name} no tiene import.json: impórtala con import-song (o elige una de src/songs/)")
@@ -352,116 +339,77 @@ def list_songs(root: Path = sg.ROOT) -> list[dict]:
     return songs
 
 
-def open_song(app: App, name: str) -> None:
-    app.sd = load_song_source(name, app.root)
-
-
-# --- HTTP -------------------------------------------------------------------------------------------------
+# --- HTTP: el servidor de bandcore, con lo propio de la Neo Geo --------------------------------------------
 
 
 def render_page(payload: dict, template: Path = HTML_PATH) -> str:
     """La página del editor de bandcore con el perfil de la Neo Geo."""
-    player = PLAYER_PATH.read_text(encoding="utf-8") + _PLAYER_ADAPTER
-    return bandeditor.render_page(payload, PROFILE, player, template)
+    return Game().render(payload, template)
 
 
-class Handler(BaseHTTPRequestHandler):
-    app: App  # lo fija serve()
+class Game(bandserver.EditorGame):
+    """Lo propio de NGBand para el servidor del editor. `root` es la raíz del proyecto (las pruebas usan otra)."""
 
-    def log_message(self, format, *args):  # sin ruido en la terminal
-        pass
+    profile = PROFILE
 
-    def _send(self, status: int, body: bytes, content_type: str) -> None:
-        self.send_response(status)
-        self.send_header("Content-Type", content_type)
-        self.send_header("Content-Length", str(len(body)))
-        self.send_header("Cache-Control", "no-store")
-        self.end_headers()
-        self.wfile.write(body)
+    def __init__(self, root: Path = sg.ROOT):
+        self.root = root
 
-    def _json(self, status: int, data: dict) -> None:
-        self._send(status, json.dumps(data).encode("utf-8"), "application/json")
+    def player_js(self) -> str:
+        return PLAYER_PATH.read_text(encoding="utf-8") + _PLAYER_ADAPTER
 
-    def _need_song(self) -> sg.SongData:
-        if self.app.sd is None:
-            raise ValueError("no hay canción abierta")
-        return self.app.sd
+    def open(self, name: str) -> sg.SongData:
+        return load_song_source(name, self.root)
 
-    def do_GET(self) -> None:
-        path = urlparse(self.path).path
-        try:
-            with self.app.lock:
-                if path == "/":
-                    if self.app.sd is None:
-                        page = render_page({"home": True}, HOME_PATH)
-                    else:
-                        page = render_page({**build_payload(self.app.sd), "editable": True, "player": True})
-                    self._send(200, page.encode("utf-8"), "text/html; charset=utf-8")
-                elif path == "/api/state":
-                    self._json(200, {**build_payload(self._need_song()), "editable": True})
-                elif path == "/api/player":
-                    self._json(200, player_payload(self._need_song()))
-                elif path == "/api/songs":
-                    self._json(200, {"songs": list_songs(self.app.root)})
-                else:
-                    self._send(404, b"no encontrado", "text/plain; charset=utf-8")
-        except (ValueError, KeyError) as error:
-            self._json(400, {"error": str(error)})
+    def payload(self, sd: sg.SongData) -> dict:
+        return build_payload(sd)
 
-    def do_POST(self) -> None:
-        # Solo la propia página: otro origen (una web cualquiera) no puede escribir en el proyecto
-        if self.headers.get("Origin") not in (None, f"http://{self.headers.get('Host')}"):
-            self._json(403, {"error": "origen no permitido"})
-            return
-        app = self.app
-        try:
-            body = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))) or b"{}")
-            if not isinstance(body, dict):
-                raise ValueError("cuerpo inválido")
-            with app.lock:
-                if self.path == "/api/open":
-                    open_song(app, str(body.get("name", "")))
-                    self._json(200, {"message": f"abierta {app.sd.name}"})
-                elif self.path == "/api/close":
-                    app.sd = None
-                    self._json(200, {"message": "cerrada"})
-                elif self.path in ("/api/validate", "/api/save", "/api/export", "/api/drums"):
-                    sd = self._need_song()
-                    if body.get("song") != sd.name:
-                        raise ValueError("la canción de esta página ya no es la abierta: recarga la página")
-                    if self.path == "/api/validate":
-                        self._json(200, {"problems": problems_for(body["key"], chart_from_json(body["chart"]))})
-                    elif self.path == "/api/drums":
-                        self._json(200, drums_response(sd, body["assignment"]))
-                    else:
-                        charts = {key: chart_from_json(items) for key, items in body["charts"].items()}
-                        assignment = body.get("drums")
-                        if self.path == "/api/save":
-                            edits = save_edits_from_page(sd, charts, assignment)
-                            self._json(200, {"message": f"guardado ({sum(len(o) for o in edits.values())} ediciones)"})
-                        else:
-                            self._json(200, {"message": export_song(sd, charts, assignment, app.root)})
-                else:
-                    self._json(404, {"error": "no encontrado"})
-        except (ValueError, KeyError, TypeError) as error:
-            self._json(400, {"error": str(error)})
+    def player(self, sd: sg.SongData) -> dict:
+        return player_payload(sd)
+
+    def problems(self, key: str, chart: list[ChartNote]) -> list[dict]:
+        return problems_for(key, chart)
+
+    def drums(self, sd: sg.SongData, assignment: dict) -> dict:
+        return drums_response(sd, assignment)
+
+    def save(self, sd: sg.SongData, charts: dict, assignment: dict | None) -> dict:
+        return save_edits_from_page(sd, charts, assignment)
+
+    def export(self, sd: sg.SongData, charts: dict, assignment: dict | None) -> tuple[str, sg.SongData]:
+        return export_song(sd, charts, assignment, self.root), sd
+
+    def songs(self) -> list[dict]:
+        return list_songs(self.root)
+
+
+Handler = bandserver.Handler
+
+
+class App(bandserver.App):
+    """La canción abierta (o ninguna) del servidor; `sd` es la canción (`song` en bandcore)."""
+
+    def __init__(self, sd: sg.SongData | None = None, root: Path = sg.ROOT):
+        super().__init__(Game(root), sd)
+        self.root = root
+
+    @property
+    def sd(self) -> sg.SongData | None:
+        return self.song
+
+    @sd.setter
+    def sd(self, value: sg.SongData | None) -> None:
+        self.song = value
+
+
+def open_song(app: App, name: str) -> None:
+    app.song = app.game.open(name)
 
 
 def make_server(name: str | None, port: int = 0, root: Path = sg.ROOT) -> ThreadingHTTPServer:
     """El servidor, ya ligado a 127.0.0.1 (nunca a otra interfaz, R16.1)."""
-    app = App(load_song_source(name, root) if name else None, root)
-    return ThreadingHTTPServer(("127.0.0.1", port), type("Bound", (Handler,), {"app": app}))
+    return bandserver.make_server(App(load_song_source(name, root) if name else None, root), port)
 
 
 def serve(name: str | None, port: int, open_browser: bool, root: Path = sg.ROOT) -> None:
-    server = make_server(name, port, root)
-    url = f"http://127.0.0.1:{server.server_address[1]}/"
-    print(f"Editor de charts{f' de {name!r}' if name else ''}: {url}  (Ctrl+C para cerrar)")
-    if open_browser:
-        threading.Timer(0.3, webbrowser.open, args=(url,)).start()
-    try:
-        server.serve_forever()
-    except KeyboardInterrupt:
-        print()
-    finally:
-        server.server_close()
+    bandserver.serve(App(load_song_source(name, root) if name else None, root), port, open_browser)
