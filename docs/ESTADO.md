@@ -28,6 +28,11 @@ perdidos), récord tras apagar, Practice y la calibración del bot humano.
 - El servidor del editor (rutas, App, Handler) es el de bandcore (`bandcore.editor.server`); `editor.py` define
   `Game` con lo propio de la Neo Geo. `make_server(name, port, root)` y `App(sd, root)` siguen igual para las pruebas.
   Probado en Chrome: abrir, Escuchar, Guardar y Exportar.
+- El generador de charts (`Note`, dificultades, carriles, acordes, colas, frases estelares, `build_chart`) y la
+  batería (papeles, drums.json, `build_drum_chart`) vienen de bandcore. NGBand conserva `chart_entries` y `chart_size`
+  (su formato parte también los saltos de 255 exactos), lo de `song.c` y la agrupación de golpes del ADPCM.
+  `ngband reimport` de las 10 canciones da los mismos archivos que antes. Los `song.c` se regeneraron una vez para que
+  la línea vacía que movía `songgen.py` deje de aparecer como cambio.
 
 ## Sesión 4 (2026-10-30): pista fija y repositorio
 
