@@ -17,6 +17,15 @@ def _cmd_adpcm(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_test(args: argparse.Namespace) -> int:
+    from bandcore import testrun
+
+    from . import testing
+    return testrun.main(args, root=testing.ROOT, cases=testing.build_cases(args), build=testrun.build_command(testing.ROOT),
+                        emulator=testing.emulator(window=not args.sin_ventana), post=testing.post,
+                        build_hint="NGBand se compila con ngdevkit (build.sh); en Windows todavía no hay build.ps1")
+
+
 def _cmd_list_songs(args: argparse.Namespace) -> int:
     from .songlist import write_song_list
     names = write_song_list(Path(args.out), release=args.release)
@@ -151,6 +160,11 @@ def main(argv: list[str] | None = None) -> int:
             p.add_argument("--rebuild-font", action="store_true",
                            help="regenera assets/fonts/bongo8_glyphs.txt desde la TTF (necesita Pillow)")
         p.set_defaults(fn=fn)
+    from bandcore import testrun
+
+    p = sub.add_parser("test", help="compila y corre las pruebas en MAME (en ventana; igual en macOS y Windows)")
+    testrun.add_arguments(p)
+    p.set_defaults(fn=_cmd_test)
     args = parser.parse_args(argv)
     return args.fn(args)
 

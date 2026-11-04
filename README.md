@@ -185,13 +185,22 @@ de JavaScript y la lógica pura del juego en C (la misma fuente que va en la ROM
 pruebas de propiedades (Hypothesis). **Esto es lo que pasa hoy.**
 
 ```bash
-tests/run_tests.sh
+uv run ngband test                 # compila y corre todos los casos (macOS y Windows)
+uv run ngband test --no-build -j 4 # con la ROM que ya está, 4 casos a la vez
+uv run ngband test --rapida        # un subconjunto representativo
+uv run ngband test --lista         # solo muestra los casos
 ```
 
-Compila y juega cada caso en MAME, sin ventana y a toda velocidad (con `NGBAND_MAME_WINDOW=1` se ve la ventana,
-sin quitarle el foco a lo que estés usando), con un bot (`tests/autoplay.lua`) que lee las
+`tests/run_tests.sh` y `tests/run_tests.ps1` son envoltorios de ese mismo comando; el corredor es el de
+`bandcore.testrun`, el mismo de los otros tres juegos. Las fallas ya conocidas están en `tests/known_failures.txt`
+(23 hoy): no cambian el código de salida, una falla nueva sí, y si un caso conocido pasa, el resumen avisa. En Windows
+el corredor funciona, pero compilar NGBand (ngdevkit) todavía solo está probado en macOS y Linux: ahí corre con
+`--no-build` sobre una ROM ya compilada.
+
+Compila y juega cada caso en MAME, en una ventana (nunca en pantalla completa; en macOS se le devuelve el foco a lo
+que estés usando) y a toda velocidad (con `--sin-ventana` corre invisible, sin ninguna ventana), con un bot (`tests/autoplay.lua`) que lee las
 notas de la RAM, toca y anota los resultados (juego perfecto, sin tocar, machacar, humano; 2 jugadores; pausa;
-opciones; récords; audio; cuadros perdidos). `tests/run_tests.sh 'demo-*'` corre solo los casos que coinciden;
+opciones; récords; audio; cuadros perdidos). `ngband test 'demo-*'` corre solo los casos que coinciden;
 `--no-build` usa la ROM que ya está. **Ya corre, pero los casos todavía fallan** (el bot pierde notas y se
 pierden cuadros; ver `docs/ESTADO.md`).
 

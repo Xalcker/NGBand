@@ -124,10 +124,8 @@ def check(d: Path, mode: str, players: int, mode2: str, max_lost: int) -> tuple[
     return r, problems
 
 
-def main(argv: list[str]) -> int:
-    d, mode, name = Path(argv[1]), argv[2], argv[3]
-    players, mode2, max_lost = int(argv[4]), argv[5], int(argv[7])
-    r, problems = check(d, mode, players, mode2, max_lost)
+def summary_line(r: dict, mode: str, players: int) -> str:
+    """El resumen de una línea de un caso (lo imprime el corredor de pruebas)."""
     if mode == "leer_record":
         summary = f"récord {r.get('record')} {r.get('iniciales')}"
     elif mode in ("practica", "marcas"):
@@ -139,6 +137,14 @@ def main(argv: list[str]) -> int:
         if players:
             summary += f", J2 {r.get('j2_notas')}/{r.get('j2_total')} fallo {r.get('j2_fallo')}"
             summary += f", ganador {r.get('ganador')}" if players == 1 else f", banda {r.get('banda_puntaje')} {r.get('banda_estrellas')}*"
+    return summary
+
+
+def main(argv: list[str]) -> int:
+    d, mode, name = Path(argv[1]), argv[2], argv[3]
+    players, mode2, max_lost = int(argv[4]), argv[5], int(argv[7])
+    r, problems = check(d, mode, players, mode2, max_lost)
+    summary = summary_line(r, mode, players)
     print(("FALLA " if problems else "ok    ") + f"{name}: {summary}" + "".join(f"\n      - {p}" for p in problems))
     return 1 if problems else 0
 
