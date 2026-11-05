@@ -158,7 +158,8 @@ def build_cases(args, root: Path = ROOT) -> list[Case]:
 def emulator(root: Path = ROOT, window: bool = True) -> testrun.Mame:
     game = os.environ.get("NGBAND_MAME_GAME", "ngband")
     rompath = os.environ.get("NGBAND_MAME_ROMPATH", str(root / "build" / "rom"))
-    return testrun.Mame(lambda case: ["neogeo", "-hash", rompath, "-rompath", rompath, "-cart1", game],
+    debug = ["-debug", "-debugger", "none"] if os.environ.get("NGBAND_TRACE") else []  # perfil (autoplay.lua)
+    return testrun.Mame(lambda case: ["neogeo", "-hash", rompath, "-rompath", rompath, "-cart1", game, *debug],
                         root / "tests" / "autoplay.lua", window=window, resolution="640x448")
 
 

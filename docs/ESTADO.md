@@ -1,16 +1,78 @@
 # Estado de NGBand y cómo continuar
 
-Última sesión (2026-10-30, tarde): las 10 canciones entran y el audio suena en MAME; el arnés completo ya corre.
+Última sesión (2026-11-05): varios bytes por VBlank al Z80 y las canciones con el arreglo de GENBand; el arnés pasa
+44 de 57.
 Este archivo es el punto de partida para cualquier agente o persona que siga el trabajo. Léelo junto con
 `CLAUDE.md`, `README.md` y la spec en `.kiro/specs/neogeo-band/` (requirements.md, design.md, tasks.md).
 
 ## Resumen en una línea
 
 La ROM compila con **las 10 canciones**, en MAME **suena**, y la autopista tiene **pista fija** (sprites) con
-franjas que se mueven solas. Repositorio público: <https://github.com/Xalcker/NGBand>. Las 250 pruebas del host
-pasan. En `tests/run_tests.sh` (`-DNGBAND_DEBUG`): **34 de 55 casos pasan**, 0 desincronías; los bots perfectos
-aciertan todo en todos los modos. Lo que falla: sincronía audio/Chart con fallos (14), 2 jugadores (cuadros
-perdidos), récord tras apagar, Practice y la calibración del bot humano.
+franjas que se mueven solas. Repositorio público: <https://github.com/Xalcker/NGBand>. Las 255 pruebas del host
+pasan (más las 108 de `pctools/tests`). En el arnés de MAME (`uv run ngband test --sin-ventana`, `-DNGBAND_DEBUG`):
+**44 de 57 casos pasan**, 0 desincronías del driver. Lo que falla: cuadros perdidos (2 jugadores y batería en
+experto), sincronía tras pausar a 125%, récord tras apagar, Practice, `vs-record` y la calibración del bot humano.
+
+## Sesión 6b (2026-11-05): el arreglo de GENBand
+
+- **Por qué sonaba mal:** `famistudio.py` tenía parches FM propios y simples, copiaba la envolvente de volumen del
+  NES al TL en **cada cuadro** (el FM ya cae solo: caía dos veces) y tocaba **toda la batería en FM 4**: la tarola y
+  los platillos eran tonos metálicos, y el bombo y la tarola juntos sonaban como uno solo.
+- **Ahora es el arreglo de GENBand** (`GENBand/audio/nesband_fm.py`) desde los mismos proyectos de NESBand:
+  - Los 13 sonidos de `GENBand/audio/sonidos.py`, copiados tal cual: el YM2610 y el YM2612 son OPN, con los mismos
+    registros de operador. Cada instrumento toma su sonido por nombre (`INSTRUMENT_PATCH`).
+  - Volumen fijo por instrumento (`volume_extra`, el máximo de su envolvente) y el teclado 2 pasos abajo
+    (`CHANNEL_MIX`).
+  - El bombo de GENBand en FM 4. La tarola y los platillos van al **ruido del SSG 1**, con las envolventes de GENBand y
+    un periodo de tono propio (con el tono apagado) para que `drums.py` agrupe los golpes: `fm4:G3`, `ssg1:D3`,
+    `ssg1:D5`, `ssg1:F5`. El SSG 3 queda para los efectos. `import.json`: `"bateria": "fm4,ssg1"`.
+- **Charts:**
+  - Guitarra, teclado y bajo salen **idénticos** (comparados en `song.c`).
+  - La batería cambió: ahora sigue la partitura de NESBand (bombo y tarola juntos; antes había golpes perdidos o
+    contados doble).
+  - `drums.channel_strikes` ya no junta dos bombos pegados: un tono que sube es otro golpe.
+- **Tamaño:** los streams bajaron mucho (tormenta: de 99 KB a 37 KB; la M1 trae 112 KB de 176).
+- **Efecto secundario:** `tormenta-bateria-experto` pierde ~24 cuadros. Hay más bombos, y cada barra de bombo son
+  varios sprites (`add_kick`): en las partes densas `spr_set`, `admit` y `spr_flush` llenan el cuadro. Es parte
+  del pendiente de rendimiento.
+- **Herramientas nuevas:**
+  - `tests/mame/audio.lua` con `NGBAND_AUDIO_RIGHT=n` graba la canción n del Menu (WAV en `build/smoke/audio.wav`).
+  - `NGBAND_LOST_DEBUG=1` anota en `bot.log` el cuadro de la canción de cada cuadro perdido.
+  - `NGBAND_TRACE=<cuadro>` traza el 68000 tres cuadros desde ahí (MAME con `-debug`). Luego
+    `python3 tests/mame/trace_report.py build/test-<caso>/tr.txt`.
+- **Prueba con música de arcade (sin guardar nada en el repositorio):**
+  - Se grabó de MAME la música de SF2 (CPS1): un script de Lua manda el código de sonido por el latch y guarda las
+    escrituras al YM2151 como VGM.
+  - `band convert --to ng` la arregló, se importó solo para grabar el WAV y se borró.
+  - Funciona, pero sin batería (en SF2 es el OKI) y con 3 de 8 canales FM.
+- **Falta escuchar** las canciones con oído. Por espectro: hay ruido en 4-8 kHz y los graves pesan más (el bombo de
+  GENBand); ajustar volúmenes si hace falta.
+
+
+
+## Sesión 6 (2026-11-05): varios bytes por VBlank al Z80
+
+- **Causa de la sincronía audio/Chart con fallos:** el ISR mandaba **un byte por VBlank**. Un silencio o un efecto
+  (2 bytes cada uno) ocupaba los VBlanks de los CMD_FRAME siguientes y el stream se atrasaba 2-4 cuadros (hasta 10
+  con 2 jugadores).
+- **Ahora:** la NMI del Z80 (`z80/driver.c`) responde en `port_reply` cuántos bytes lleva **recibidos**, y
+  `ac_pump` (`audio_cmd.c`) manda todo lo pendiente en el mismo VBlank (hasta `AC_BYTES_PER_VBLANK`). Antes de
+  cada byte espera a que la respuesta alcance `sent` (hasta `AC_ACK_SPIN` lecturas); si el Z80 no confirma, para
+  y sigue en el siguiente VBlank. Tras `AC_LAG_LIMIT` VBlanks sin confirmar, da el byte por perdido (cuenta en
+  `desync_count`). El protocolo de comandos no cambió.
+- **Arranque:** tras `CMD_RESET` el 68000 espera `AC_RESET_WAIT` (2) VBlanks, porque la respuesta todavía es la
+  del driver de la BIOS (0). Además, `main` del Z80 ya no pone `port_reply = 0`: ponía 0 encima de bytes que
+  habían llegado por NMI mientras arrancaba, y daba 2 desincronías en cada partida.
+- **Sonda:** `g_probe.song_frame` se escribe junto al CMD_FRAME del cuadro, no después de `draw()`. Si el bot
+  leía en medio, veía el cuadro ya encolado con el reloj viejo, y a 125% eso eran 2 cuadros (`tormenta-rapida`).
+- Pruebas del host nuevas en `test_audio_frame2.py` (`ac_pump` con un Z80 simulado: latch de un byte, lento,
+  muerto, y RESET con la respuesta de la BIOS).
+- **Sin ventana:** `tests/mame/mame.sh` pone `SDL_VIDEODRIVER=dummy`. En macOS `-video none` solo sigue
+  abriendo una ventana.
+- Arnés: 34 → **45 de 57**. Arreglados: demo-machacar, demo-mitad, perf-1p-peor, tormenta-machacar,
+  tormenta-rapida y 6 del bot humano.
+- **Queda:** `tormenta-pausa-rapida`. Después de pausar a 125%, una muestra aislada con la Chart 2 cuadros
+  adelante cada 256 VBlanks (20 de 6022). No se ha encontrado la causa (sin desincronía del driver).
 
 ## Sesión 5 (2026-10-30): bandcore
 
@@ -173,10 +235,10 @@ en el WAV.
 
 ## Pendientes, en orden sugerido
 
-1. **Sincronía audio/Chart con fallos** (14 casos, 2-4 cuadros pasajeros; 7-10 con 2 jugadores): MUTE/UNMUTE y
-   SFX son de 2 bytes y la cola (`AC_QUEUE_SIZE` 16, un byte por VBlank) se atrasa o se llena. Ideas: cola más
-   grande, mandar los FRAME antes que los silencios, juntar MUTE+UNMUTE del mismo instrumento.
-2. **2 jugadores:** VS pierde ~45 cuadros, Co-Op que cae ~160. Perfilar como en la sesión 3.
+1. **Rendimiento:** 2 jugadores (VS pierde ~50 cuadros, Co-Op que cae ~170) y batería en experto (~24, barras de
+   bombo). Perfilar con `NGBAND_LOST_DEBUG` y `NGBAND_TRACE` (sesión 6b). Idea: sprites encadenados (sticky) en las
+   barras del bombo.
+2. **Sincronía tras pausar a 125%** (`tormenta-pausa-rapida`, ver sesión 6): muestras aisladas cada 256 VBlanks.
 3. **Récord que no sobrevive al apagar** (`demo-record-persiste`): se guarda al inicio de la backup RAM
    (0xD00000), que en el MVS es de la BIOS. Usar el bloque que la BIOS guarda y restaura (cabecera del cartucho).
 4. **Practice** (`marcha-practica`: el bot no ve vueltas) y **bot humano** (pierde 0% en experto).

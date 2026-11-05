@@ -467,8 +467,24 @@ local function finish_simple(text)
     wait = 3
 end
 
+-- Perfil (NGBAND_TRACE=<cuadro de la canción>, MAME con -debug -debugger none): traza el 68000 durante 3 cuadros
+-- desde ese cuadro en <salida>/tr.txt. Luego: python3 tests/mame/trace_report.py <salida>/tr.txt
+local trace_at = tonumber(os.getenv("NGBAND_TRACE") or "")
+local LOST_DEBUG = os.getenv("NGBAND_LOST_DEBUG") == "1"
+local lost_seen = 0
+local trace_end
 emu.register_frame_done(function()
     frame = frame + 1
+    if trace_at then
+        local dbg = manager.machine.debugger
+        if frame == 2 then dbg:command("go") end
+        if not trace_end and frame > 400 and rd("screen") == 3 and rd("song_frame") >= trace_at then
+            dbg:command("trace " .. out .. "/tr.txt,maincpu,noloop")
+            trace_end = frame + 3
+        elseif trace_end and frame == trace_end then
+            dbg:command("trace off,maincpu")
+        end
+    end
     if frame > TIMEOUT then
         note("se acabó el tiempo")
         manager.machine:exit()
@@ -483,6 +499,13 @@ emu.register_frame_done(function()
     end
 
     local s = rd("screen")
+    if LOST_DEBUG and vb0 then   -- NGBAND_LOST_DEBUG=1: anota cada cuadro perdido (para perfilar con NGBAND_TRACE)
+        local lost = lost_frames()
+        if lost > lost_seen then
+            note(string.format("cuadro perdido: canción %d (total %d)", rd("song_frame"), lost))
+            lost_seen = lost
+        end
+    end
     if frame % 600 == 0 then
         local lost, dv, ds = lost_frames()
         note(string.format("pantalla %d, cuadro de la canción %d, estado %s, cola %d, vblank %d, pasos %d, perdidos %d, pc %06X",

@@ -58,6 +58,7 @@ u8 ac_next_byte(AudioCmd *a, u8 *byte)
   switch (cmd) {
     case CMD_RESET:
       a->grace = AC_RESTART_WAIT;
+      a->boot_wait = AC_RESET_WAIT;
       a->sent = 0;                 /* el Z80 rearranca con la cuenta en 0: el RESET mismo no se cuenta */
       /* fall through */
     case CMD_SILENCE_ALL:
@@ -94,6 +95,40 @@ u8 ac_check(AudioCmd *a, u8 reply)
   return 0;
 }
 
+u8 ac_pump(AudioCmd *a, u8 (*reply)(void), void (*write)(u8))
+{
+  u8 n = 0, b;
+  u16 spin;
+  if (a->boot_wait) { a->boot_wait--; return 0; }   /* la respuesta todavía es la del driver de la BIOS */
+  while (n < AC_BYTES_PER_VBLANK && (a->arg_pending || ac_pending(a))) {
+    /* CMD_RESET (el primero que se manda, con el driver de la BIOS todavía corriendo) no espera respuesta. */
+    const u8 reset = !a->arg_pending && (u8)(a->q[a->head & (AC_QUEUE_SIZE - 1)] >> 8) == CMD_RESET;
+    if (!reset) {
+      for (spin = 0; reply() != a->sent; spin++) {
+        if (spin >= AC_ACK_SPIN) {
+          /* Sin respuesta: el Z80 no ha tomado el byte anterior. Escribir ahora lo pisaría; se reintenta en el
+           * siguiente VBlank. Si no llega en AC_LAG_LIMIT VBlanks, el byte se perdió: se cuenta y se sigue. */
+          if (n == 0 && ++a->stall >= AC_LAG_LIMIT) {
+            a->stall = 0;
+            a->desync_count++;
+            a->last_expected = a->sent;
+            a->last_reply = reply();
+            a->sent = a->last_reply;
+            continue;
+          }
+          return n;
+        }
+      }
+    }
+    a->stall = 0;
+    if (!ac_next_byte(a, &b)) break;
+    write(b);
+    n++;
+    if (reset) break;   /* el Z80 rearranca: lo demás espera al siguiente VBlank */
+  }
+  return n;
+}
+
 void ac_set_expected(AudioCmd *a, u8 frames)
 {
   a->expected = frames;
@@ -113,14 +148,16 @@ void ac_hw_init(void)
   ac_push(&g_audio, CMD_RESET, 0);
 }
 
+static u8 hw_reply(void) { return REG_SOUND_REPLY; }
+static void hw_write(u8 b) { REG_SOUND = b; }
+
 void ac_vblank(void)
 {
-  u8 b;
 #ifdef NGBAND_DEBUG
   /* El Z80 ya procesó todo lo escrito en cuadros anteriores. Una desincronía queda contada en
    * g_audio.desync_count (visible en ngband.sym para el Test_Harness). */
   (void)ac_check(&g_audio, REG_SOUND_REPLY);
 #endif
-  if (ac_next_byte(&g_audio, &b)) REG_SOUND = b;
+  (void)ac_pump(&g_audio, hw_reply, hw_write);
 }
 #endif

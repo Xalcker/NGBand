@@ -65,48 +65,63 @@ def test_output_is_a_ym2610_vgm_readable_by_vgm_py(vgm_bytes):
     assert data.tags["title"] == "Cancion" and data.tags["author"] == "NESBand"
 
 
-def test_channels_map_to_fm_and_drums_to_fm4(vgm_bytes):
+def test_channels_map_to_fm_and_drums_to_fm4_and_ssg1(vgm_bytes):
     data = vgm.parse_vgm(vgm_bytes)
     found = nt.extract_notes(data)
-    by_channel = {c: [n for n in found if n.channel == c] for c in ("fm1", "fm2", "fm3", "fm4")}
-    assert not [n for n in found if n.channel.startswith("ssg")]
+    by_channel = {c: [n for n in found if n.channel == c] for c in ("fm1", "fm2", "fm3", "fm4", "ssg1")}
+    assert not [n for n in found if n.channel in ("ssg2", "ssg3")]   # el SSG 3 es de los efectos
     # pulso 1: 8 notas por patrón; pulso 2 y triángulo: 4; la melodía coincide con la escala escrita
     assert len(by_channel["fm1"]) == 8 * PATTERNS
     assert [n.midi for n in by_channel["fm1"][:8]] == [72, 74, 76, 79, 81, 79, 76, 74]
     assert len(by_channel["fm2"]) == 4 * PATTERNS and len(by_channel["fm3"]) == 4 * PATTERNS
     assert [n.midi for n in by_channel["fm3"][:4]] == [48, 43, 45, 52]
-    # batería: bombo y tarola de ruido y DPCM, platillos; tonos distintos por golpe
-    drum_pitches = {n.midi for n in by_channel["fm4"]}
-    assert {fs.DRUM_PITCH["tarola"], fs.DRUM_PITCH["platillo"]} <= drum_pitches
-    assert fs.DRUM_PITCH["bombo"] in drum_pitches
+    # bombo (ruido y DPCM) en el FM 4: arranca en G3 y baja con el barrido
+    kicks = [n for n in by_channel["fm4"] if round(n.midi) == fs.DRUM_PITCH["bombo"]]
+    assert [n.start for n in kicks[:3]] == [0, 6, 48]
+    # tarola y platillo en el ruido del SSG 1, cada uno con su tono (para agrupar los golpes)
+    noise = [(n.start, round(n.midi)) for n in by_channel["ssg1"] if n.start < 96]
+    assert noise == [(24, fs.DRUM_PITCH["tarola"]), (36, fs.DRUM_PITCH["platillo"]), (60, fs.DRUM_PITCH["tarola"]),
+                     (72, fs.DRUM_PITCH["tarola"]), (84, fs.DRUM_PITCH["platillo"])]
     # la nota empieza en el cuadro que dice el proyecto (pulso 1: Time 12 -> cuadro 12)
     assert by_channel["fm1"][1].start == 12
 
 
 def test_patch_by_instrument_name_and_channel_fallback():
     assert fs.patch_for("Guitarra", "Square2").name == "guitarra"
+    assert fs.patch_for("Teclado", "Square2").name == "organo"      # como en GENBand
+    assert fs.patch_for("Surf", "Square1").name == "limpia"
     assert fs.patch_for("Órgano", "Square1").name == "organo"
     assert fs.patch_for("Bajo", "Square1").name == "bajo"
     assert fs.patch_for("Desconocido", "Square1").name == "guitarra"
-    assert fs.patch_for(None, "Square2").name == "teclado"
+    assert fs.patch_for(None, "Square2").name == "organo"
     assert fs.patch_for("Nada", "Triangle").name == "bajo"
 
 
-def test_volume_to_attenuation_is_monotonic():
-    assert fs.attenuation(15) == 0 and fs.attenuation(0) == 127
-    values = [fs.attenuation(v) for v in range(15, 0, -1)]
-    assert values == sorted(values) and len(set(values)) == 15 - 0 and max(values) < 127
+def test_every_instrument_of_the_songs_has_a_sound():
+    """Los instrumentos melódicos de audio/*.txt tienen nombre exacto en INSTRUMENT_PATCH."""
+    root = Path(__file__).resolve().parents[2] / "audio"
+    for path in root.glob("*.txt"):
+        if path.stem == "efectos":
+            continue
+        project = fs.parse_text(path.read_text(encoding="utf-8"))
+        for song in project.songs:
+            for kind in fs.MELODIC:
+                for note in song.notes.get(kind, []):
+                    assert note.instrument in fs.INSTRUMENT_PATCH, (path.name, note.instrument)
 
 
-def test_volume_envelope_drives_carrier_total_level(vgm_bytes):
+def test_volume_is_fixed_per_instrument(vgm_bytes):
+    """El volumen máximo de la envolvente del NES fija la atenuación una vez; el FM hace su propia caída."""
+    assert fs.volume_extra(13) == 0 and fs.volume_extra(15) == 0 and fs.volume_extra(9) == 6
     data = vgm.parse_vgm(vgm_bytes)
-    # FM 1 = puerto A, desplazamiento 1; carriles del algoritmo 4: operadores 2 y 4 (+8 y +12)
-    tl = [w.value for w in data.writes[:200] if w.chip == "ym0" and w.reg == 0x40 + 1 + 8]
-    patch = fs.PATCHES["guitarra"]
-    assert tl[:4] == [patch.ops[1].tl + fs.attenuation(v) for v in (15, 12, 8, 4)]
-    # los moduladores no cambian con el volumen
+    # FM 1 = puerto A, desplazamiento 1; portadores del algoritmo 4: operadores 2 y 4 (+8 y +12)
+    tl = {w.value for w in data.writes if w.chip == "ym0" and w.reg == 0x40 + 1 + 8}
+    assert tl == {fs.PATCHES["guitarra"].ops[1].tl + fs.volume_extra(15)}
+    # el teclado va 2 pasos abajo (CHANNEL_MIX) y los moduladores no cambian
+    tl2 = {w.value for w in data.writes if w.chip == "ym0" and w.reg == 0x40 + 2 + 12}
+    assert tl2 == {fs.PATCHES["organo"].ops[3].tl + fs.CHANNEL_MIX[1]}
     mod = {w.value for w in data.writes if w.chip == "ym0" and w.reg == 0x40 + 1}
-    assert mod == {patch.ops[0].tl}
+    assert mod == {fs.PATCHES["guitarra"].ops[0].tl}
 
 
 def test_triangle_ignores_volume_envelope():
@@ -117,6 +132,12 @@ def test_triangle_ignores_volume_envelope():
     assert values == {fs.PATCHES["bajo"].ops[3].tl}
 
 
+def test_ssg_volume_maps_psg_steps():
+    assert fs.ssg_volume(15) == 15 and fs.ssg_volume(0) == 0
+    values = [fs.ssg_volume(v) for v in range(1, 16)]
+    assert values == sorted(values) and min(values) >= 1
+
+
 def test_loop_point_sets_loop_offset():
     data = vgm.parse_vgm(fs.convert_text(project_text(loop_point=2)))
     assert vgm.frame_of(data.loop_sample) == 2 * 96
@@ -125,14 +146,14 @@ def test_loop_point_sets_loop_offset():
 
 def test_keys_are_released_at_the_end(vgm_bytes):
     data = vgm.parse_vgm(vgm_bytes)
-    tail = [(w.reg, w.value) for w in data.writes[-4:]]
-    assert tail == [(0x28, 1), (0x28, 2), (0x28, 5), (0x28, 6)]
+    tail = [(w.reg, w.value) for w in data.writes[-5:]]
+    assert tail == [(0x28, 1), (0x28, 2), (0x28, 5), (0x28, 6), (0x08, 0)]
 
 
 def test_song_is_importable_by_songgen(tmp_path):
     source = tmp_path / "prueba.vgm"
     source.write_bytes(fs.convert_text(project_text()))
-    opts = {"name": "prueba", "source": str(source), "guitarra": "fm1", "teclado": "fm2", "bajo": "fm3", "bateria": "fm4"}
+    opts = {"name": "prueba", "source": str(source), "guitarra": "fm1", "teclado": "fm2", "bajo": "fm3", "bateria": "fm4,ssg1"}
     lines = songgen.import_song(opts, root=tmp_path)
     assert isinstance(lines, list)
     text = (tmp_path / "src" / "songs" / "prueba" / "song.c").read_text(encoding="utf-8")

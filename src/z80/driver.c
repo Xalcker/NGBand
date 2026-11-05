@@ -13,8 +13,9 @@
  * M1, que puede medir hasta 1 MB. `map_stream` pone la posición pedida en la ventana de 16 KB y los 8 KB
  * siguientes en la de 0xC000, así que desde ella se ven al menos SH_MAP_SPAN bytes seguidos.
  *
- * La NMI solo guarda el byte recibido en una cola; el bucle principal lo procesa y escribe la respuesta.
- * Así un comando largo (CMD_SONG_SEEK) no anida NMIs ni pierde los bytes que llegan mientras tanto.
+ * La NMI solo guarda el byte recibido en una cola y responde cuántos lleva recibidos (módulo 256): con esa
+ * confirmación el 68000 manda el siguiente byte en el mismo VBlank sin pisar el anterior (ver audio_cmd.h).
+ * El bucle principal procesa la cola; un comando largo (CMD_SONG_SEEK) no anida NMIs ni pierde bytes.
  *
  * `song_table`/`song_count` los genera el build a partir de src/songs/ (posiciones en la M1).
  * `drum_table`/`drum_count` salen del mapa de samples de `ngband adpcm`.
@@ -39,7 +40,7 @@ extern const u8 drum_count;
 
 ShadowRegs g_sh;   /* global para que salga en el mapa (pruebas en MAME) */
 
-#define RX_SIZE 64   /* potencia de 2: más de un segundo de comandos (el 68000 manda uno por cuadro) */
+#define RX_SIZE 64   /* potencia de 2: varios cuadros de comandos aunque el bucle principal vaya atrasado */
 static volatile u8 rx_buf[RX_SIZE];
 static volatile u8 rx_head, rx_tail;
 static u8 cur_bank = 0xFF;
@@ -106,20 +107,20 @@ void nmi_handler(void)
   }
   rx_buf[rx_tail & (RX_SIZE - 1)] = b;
   rx_tail++;
+  port_reply = rx_tail;   /* confirmación: el 68000 ya puede escribir el siguiente byte */
 }
 
 void main(void)
 {
   shadow_init(&g_sh, ym_write, 0, map_stream, song_table, song_count);
   shadow_set_drums(&g_sh, drum_table, drum_count);
-  port_reply = 0;
+  port_reply = rx_tail;   /* lo que ya llegó por NMI cuenta (no se pisa la confirmación con 0) */
   port_nmi_enable = 0;
   for (;;) {
     while (rx_head != rx_tail) {
       const u8 b = rx_buf[rx_head & (RX_SIZE - 1)];
       rx_head++;
       shadow_rx(&g_sh, b);
-      port_reply = shadow_response(&g_sh);
     }
   }
 }

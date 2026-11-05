@@ -1,9 +1,9 @@
 """Instrucciones por función de build/smoke/tr.txt (ver trace.lua), con los símbolos de build/ngband.sym."""
-import bisect, collections, re
+import bisect, collections, re, sys
 syms = sorted((int(p[0], 16), p[2]) for p in (l.split() for l in open("build/ngband.sym")) if len(p) == 3 and p[1] in "tT")
 addrs = [a for a, _ in syms]
 c, n = collections.Counter(), 0
-for l in open("build/smoke/tr.txt"):
+for l in open(sys.argv[1] if len(sys.argv) > 1 else "build/smoke/tr.txt"):
     m = re.match(r"([0-9A-F]{6}): ", l)
     if not m:
         continue
