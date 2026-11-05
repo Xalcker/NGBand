@@ -1,6 +1,7 @@
 # Estado de NGBand y cómo continuar
 
-Última sesión (2026-11-05): el 68000 manda varios bytes por VBlank al Z80 con confirmación; el arnés pasa 45 de 57.
+Última sesión (2026-11-05): varios bytes por VBlank al Z80 y las canciones con el arreglo de GENBand; el arnés pasa
+44 de 57.
 Este archivo es el punto de partida para cualquier agente o persona que siga el trabajo. Léelo junto con
 `CLAUDE.md`, `README.md` y la spec en `.kiro/specs/neogeo-band/` (requirements.md, design.md, tasks.md).
 
@@ -8,9 +9,46 @@ Este archivo es el punto de partida para cualquier agente o persona que siga el 
 
 La ROM compila con **las 10 canciones**, en MAME **suena**, y la autopista tiene **pista fija** (sprites) con
 franjas que se mueven solas. Repositorio público: <https://github.com/Xalcker/NGBand>. Las 255 pruebas del host
-pasan. En el arnés de MAME (`uv run ngband test --sin-ventana`, `-DNGBAND_DEBUG`): **45 de 57 casos pasan**, 0
-desincronías del driver. Lo que falla: 2 jugadores (cuadros perdidos), sincronía tras pausar a 125%, récord tras
-apagar, Practice, `vs-record` y la calibración del bot humano.
+pasan (más las 108 de `pctools/tests`). En el arnés de MAME (`uv run ngband test --sin-ventana`, `-DNGBAND_DEBUG`):
+**44 de 57 casos pasan**, 0 desincronías del driver. Lo que falla: cuadros perdidos (2 jugadores y batería en
+experto), sincronía tras pausar a 125%, récord tras apagar, Practice, `vs-record` y la calibración del bot humano.
+
+## Sesión 6b (2026-11-05): el arreglo de GENBand
+
+- **Por qué sonaba mal:** `famistudio.py` tenía parches FM propios y simples, copiaba la envolvente de volumen del
+  NES al TL en **cada cuadro** (el FM ya cae solo: caía dos veces) y tocaba **toda la batería en FM 4**: la tarola y
+  los platillos eran tonos metálicos, y el bombo y la tarola juntos sonaban como uno solo.
+- **Ahora es el arreglo de GENBand** (`GENBand/audio/nesband_fm.py`) desde los mismos proyectos de NESBand:
+  - Los 13 sonidos de `GENBand/audio/sonidos.py`, copiados tal cual: el YM2610 y el YM2612 son OPN, con los mismos
+    registros de operador. Cada instrumento toma su sonido por nombre (`INSTRUMENT_PATCH`).
+  - Volumen fijo por instrumento (`volume_extra`, el máximo de su envolvente) y el teclado 2 pasos abajo
+    (`CHANNEL_MIX`).
+  - El bombo de GENBand en FM 4. La tarola y los platillos van al **ruido del SSG 1**, con las envolventes de GENBand y
+    un periodo de tono propio (con el tono apagado) para que `drums.py` agrupe los golpes: `fm4:G3`, `ssg1:D3`,
+    `ssg1:D5`, `ssg1:F5`. El SSG 3 queda para los efectos. `import.json`: `"bateria": "fm4,ssg1"`.
+- **Charts:**
+  - Guitarra, teclado y bajo salen **idénticos** (comparados en `song.c`).
+  - La batería cambió: ahora sigue la partitura de NESBand (bombo y tarola juntos; antes había golpes perdidos o
+    contados doble).
+  - `drums.channel_strikes` ya no junta dos bombos pegados: un tono que sube es otro golpe.
+- **Tamaño:** los streams bajaron mucho (tormenta: de 99 KB a 37 KB; la M1 trae 112 KB de 176).
+- **Efecto secundario:** `tormenta-bateria-experto` pierde ~24 cuadros. Hay más bombos, y cada barra de bombo son
+  varios sprites (`add_kick`): en las partes densas `spr_set`, `admit` y `spr_flush` llenan el cuadro. Es parte
+  del pendiente de rendimiento.
+- **Herramientas nuevas:**
+  - `tests/mame/audio.lua` con `NGBAND_AUDIO_RIGHT=n` graba la canción n del Menu (WAV en `build/smoke/audio.wav`).
+  - `NGBAND_LOST_DEBUG=1` anota en `bot.log` el cuadro de la canción de cada cuadro perdido.
+  - `NGBAND_TRACE=<cuadro>` traza el 68000 tres cuadros desde ahí (MAME con `-debug`). Luego
+    `python3 tests/mame/trace_report.py build/test-<caso>/tr.txt`.
+- **Prueba con música de arcade (sin guardar nada en el repositorio):**
+  - Se grabó de MAME la música de SF2 (CPS1): un script de Lua manda el código de sonido por el latch y guarda las
+    escrituras al YM2151 como VGM.
+  - `band convert --to ng` la arregló, se importó solo para grabar el WAV y se borró.
+  - Funciona, pero sin batería (en SF2 es el OKI) y con 3 de 8 canales FM.
+- **Falta escuchar** las canciones con oído. Por espectro: hay ruido en 4-8 kHz y los graves pesan más (el bombo de
+  GENBand); ajustar volúmenes si hace falta.
+
+
 
 ## Sesión 6 (2026-11-05): varios bytes por VBlank al Z80
 
@@ -197,8 +235,10 @@ en el WAV.
 
 ## Pendientes, en orden sugerido
 
-1. **Sincronía tras pausar a 125%** (`tormenta-pausa-rapida`, ver sesión 6): muestras aisladas cada 256 VBlanks.
-2. **2 jugadores:** VS pierde ~45 cuadros, Co-Op que cae ~160. Perfilar como en la sesión 3.
+1. **Rendimiento:** 2 jugadores (VS pierde ~50 cuadros, Co-Op que cae ~170) y batería en experto (~24, barras de
+   bombo). Perfilar con `NGBAND_LOST_DEBUG` y `NGBAND_TRACE` (sesión 6b). Idea: sprites encadenados (sticky) en las
+   barras del bombo.
+2. **Sincronía tras pausar a 125%** (`tormenta-pausa-rapida`, ver sesión 6): muestras aisladas cada 256 VBlanks.
 3. **Récord que no sobrevive al apagar** (`demo-record-persiste`): se guarda al inicio de la backup RAM
    (0xD00000), que en el MVS es de la BIOS. Usar el bloque que la BIOS guarda y restaura (cabecera del cartucho).
 4. **Practice** (`marcha-practica`: el bot no ve vueltas) y **bot humano** (pierde 0% en experto).

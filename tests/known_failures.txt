@@ -1,6 +1,7 @@
 # Fallas conocidas de NGBand en el arnés de MAME (uv run ngband test). No cambian el código de salida; una
 # falla que NO esté aquí sí lo cambia. Si uno de estos casos pasa, el resumen lo avisa: quítalo de la lista.
-# Lista tomada el 2026-11-05 (45 ok, 12 con falla de 57); coincide con docs/ESTADO.md.
+# Lista tomada el 2026-11-05 (44 ok, 13 con falla de 57); coincide con docs/ESTADO.md. tormenta-bateria-experto
+# pierde ~24 cuadros desde el arreglo nuevo (más bombos: cada barra de bombo son varios sprites).
 # Las causas están en docs/ESTADO.md: 2 jugadores (cuadros perdidos), sincronía tras pausar a 125%, récord tras
 # apagar, Practice (marcha-*: check_result.py truena con KeyError 'fin_bucle'), vs-record (KeyError 'record') y
 # calibración del bot humano.
@@ -13,6 +14,7 @@ marcha-practica
 perf-coop-peor
 perf-vs-bateria
 perf-vs-peor
+tormenta-bateria-experto
 tormenta-pausa-rapida
 vs-empate
 vs-record

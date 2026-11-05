@@ -76,18 +76,19 @@ def group_key(channel: str, pitch: int) -> str:
 
 def channel_strikes(channel: str, ns: list[Note]) -> list[Note]:
     """Los golpes de un canal. En ADPCM-A cada nota ya es un golpe; en FM/SSG una nota que empieza donde
-    termina la anterior es la misma con otro tono (el barrido del bombo)."""
+    termina la anterior con un tono más grave es la misma (el barrido del bombo, que solo baja); si el tono sube,
+    es otro golpe pegado al anterior."""
     ordered = sorted(ns, key=lambda n: n.frame)
     if channel in UNPITCHED:
         return ordered
     out: list[Note] = []
-    end = None
+    end = last = None
     for n in ordered:
-        if end is not None and n.frame == end and out:
-            end = n.frame + n.duration
+        if end is not None and n.frame == end and out and n.pitch <= last:
+            end, last = n.frame + n.duration, n.pitch
             continue
         out.append(n)
-        end = n.frame + n.duration
+        end, last = n.frame + n.duration, n.pitch
     return out
 
 

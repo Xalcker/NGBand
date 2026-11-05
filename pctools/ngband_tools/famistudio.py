@@ -4,12 +4,13 @@ Lee el export de texto de FamiStudio (`famistudio-txt-export`; un `.txt` ya expo
 VGM que `vgm.py` lee y `songgen.py` importa como cualquier otro:
 
     pulso 1 -> FM 1 (guitarra)   pulso 2 -> FM 2 (teclado)   triángulo -> FM 3 (bajo)
-    ruido y DPCM -> batería en FM 4 (cada golpe es un tono propio y un patch percusivo)
+    ruido y DPCM -> batería: el bombo al FM 4 y la tarola y los platillos al ruido del SSG 1
 
-Cada instrumento de FamiStudio recibe un patch FM según su nombre (`patch_for`) y su envolvente de volumen (0-15,
-un paso por cuadro) se traduce a atenuación del total level (TL) de los operadores portadores (`attenuation`).
-La batería va en FM 4 y no en ADPCM-A porque así el VGM no necesita samples: `drums.py` agrupa sus golpes por tono
-(`fm4:C2`, ...). Todo ocurre a 60 cuadros por segundo (735 muestras de 44.1 kHz por cuadro), igual que el juego.
+Es el mismo arreglo de GENBand (audio/nesband_fm.py): cada instrumento toma un sonido FM de GENBand por su nombre
+(`patch_for`) y su volumen (el máximo de su envolvente del NES) se traduce una sola vez a atenuación de los
+portadores (`volume_extra`); la caída la hace el FM. La batería no usa ADPCM-A para que el VGM no necesite samples:
+`drums.py` agrupa sus golpes por tono (`fm4:G3` el bombo; `ssg1:D3`, `ssg1:D5`, `ssg1:F5` los de ruido). Todo
+ocurre a 60 cuadros por segundo (735 muestras de 44.1 kHz por cuadro), igual que el juego.
 
 Uso: `python -m ngband_tools.famistudio fuente.txt salida.vgm [--song N]`.
 """
@@ -40,12 +41,13 @@ _NOTE_NAME = re.compile(r"^([A-G])(#?)(-?\d)$")
 _PITCH_CLASS = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
 
 
-# --- Patches FM -------------------------------------------------------------------------------------------------
+# --- Sonidos FM ---------------------------------------------------------------------------------------------------
 
 
 @dataclass(frozen=True)
 class Op:
-    """Un operador: detune, multiple, total level, key scale, attack, decay, sustain rate, sustain level, release."""
+    """Un operador: multiple, total level, attack, decay (D1R), sustain rate (D2R), sustain level (D1L), release,
+    detune y key scale."""
 
     mul: int
     tl: int
@@ -53,7 +55,7 @@ class Op:
     dr: int = 0
     sr: int = 0
     sl: int = 0
-    rr: int = 7
+    rr: int = 15
     dt: int = 0
     ks: int = 0
 
@@ -64,6 +66,7 @@ class Patch:
     alg: int
     fb: int
     ops: tuple[Op, Op, Op, Op]  # operadores 1 a 4
+    sweep: tuple[int, ...] = ()  # semitonos que se suman a la nota en cada cuadro (el bombo)
 
     @property
     def carriers(self) -> tuple[int, ...]:
@@ -71,54 +74,107 @@ class Patch:
         return {0: (3,), 1: (3,), 2: (3,), 3: (3,), 4: (1, 3), 5: (1, 2, 3), 6: (1, 2, 3), 7: (0, 1, 2, 3)}[self.alg]
 
 
+def _op(mul: int = 1, dt: int = 0, tl: int = 0, ar: int = 31, d1r: int = 0, d2r: int = 0, d1l: int = 0,
+        rr: int = 15, rs: int = 0) -> Op:
+    """Un operador con los nombres de GENBand (audio/sonidos.py)."""
+    return Op(mul, tl, ar, d1r, d2r, d1l, rr, dt, rs)
+
+
+# Los sonidos de GENBand (audio/sonidos.py, GPL-2.0-or-later como este proyecto). El YM2610 y el YM2612 son de la
+# misma familia (OPN): los operadores tienen los mismos registros, así que los parches se copian tal cual.
 PATCHES: dict[str, Patch] = {p.name: p for p in [
-    Patch("guitarra", 4, 5, (Op(1, 30, dr=12, sr=6, sl=5), Op(1, 0, dr=8, sr=4, sl=3),
-                             Op(2, 40, dr=14, sr=6, sl=6), Op(2, 6, dr=10, sr=5, sl=4))),
-    Patch("lead", 4, 4, (Op(1, 34, sr=0, sl=1), Op(1, 0, sr=0, sl=1), Op(3, 46), Op(2, 10, sl=1))),
-    Patch("teclado", 4, 3, (Op(1, 36, dr=10, sr=4, sl=5), Op(1, 0, dr=9, sr=3, sl=4),
-                            Op(4, 50, dr=14, sr=6, sl=6), Op(2, 8, dr=11, sr=4, sl=5))),
-    Patch("organo", 7, 0, (Op(1, 4), Op(2, 12), Op(4, 20), Op(8, 30))),
-    Patch("acordeon", 5, 5, (Op(1, 28, sl=1), Op(1, 6, sl=1), Op(2, 8, sl=1), Op(2, 8, sl=1, dt=3))),
-    Patch("pad", 4, 2, (Op(1, 40, ar=18, sl=1, rr=5), Op(1, 6, ar=18, sl=1, rr=5),
-                        Op(2, 44, ar=16, sl=1, rr=5), Op(1, 10, ar=16, sl=1, rr=5))),
-    Patch("pluck", 4, 4, (Op(1, 24, dr=18, sr=8, sl=8, rr=9), Op(1, 0, dr=16, sr=7, sl=7, rr=9),
-                          Op(3, 40, dr=20, sr=9, sl=9, rr=9), Op(1, 8, dr=18, sr=8, sl=8, rr=9))),
-    Patch("bajo", 0, 5, (Op(1, 28, dr=10, sr=3, sl=3), Op(1, 36, dr=8, sr=2, sl=2), Op(1, 32, dr=8, sr=2, sl=2),
-                         Op(1, 0, dr=6, sr=2, sl=2))),
-    Patch("bombo", 0, 6, (Op(1, 22, dr=24, sr=14, sl=10, rr=12), Op(1, 30, dr=22, sr=12, sl=10, rr=12),
-                          Op(1, 34, dr=22, sr=12, sl=10, rr=12), Op(1, 0, dr=20, sr=12, sl=10, rr=12))),
-    Patch("tarola", 7, 7, (Op(15, 10, dr=22, sr=12, sl=8, rr=10), Op(7, 6, dr=20, sr=12, sl=8, rr=10),
-                           Op(5, 8, dr=24, sr=13, sl=8, rr=10), Op(1, 0, dr=20, sr=10, sl=6, rr=10))),
-    Patch("platillo", 7, 7, (Op(15, 6, dr=28, sr=16, sl=10, rr=12), Op(13, 8, dr=28, sr=16, sl=10, rr=12),
-                             Op(11, 10, dr=28, sr=16, sl=10, rr=12), Op(9, 4, dr=26, sr=16, sl=10, rr=12))),
-    Patch("abierto", 7, 7, (Op(15, 6, dr=16, sr=12, sl=6, rr=8), Op(13, 8, dr=16, sr=12, sl=6, rr=8),
-                            Op(11, 10, dr=16, sr=12, sl=6, rr=8), Op(9, 4, dr=14, sr=12, sl=6, rr=8))),
+    # Guitarra: dos pares (algoritmo 4) con el modulador saturado y los portadores desafinados al revés
+    Patch("guitarra", 4, 6, (_op(mul=1, tl=24, d1r=6, d2r=2, d1l=3, rr=7), _op(mul=1, dt=3, tl=8, d1r=4, d2r=2, d1l=2, rr=7),
+                             _op(mul=2, tl=30, d1r=8, d2r=3, d1l=4, rr=7), _op(mul=1, dt=7, tl=10, d1r=3, d2r=2, d1l=2, rr=7))),
+    # La guitarra apagada con la palma: cae rápido
+    Patch("apagada", 4, 6, (_op(mul=1, tl=22, d1r=10, d2r=6, d1l=5, rr=9), _op(mul=1, dt=3, tl=10, d1r=9, d2r=6, d1l=4, rr=9),
+                            _op(mul=2, tl=28, d1r=10, d2r=6, d1l=5, rr=9), _op(mul=1, dt=7, tl=12, d1r=9, d2r=6, d1l=4, rr=9))),
+    # Guitarra limpia y brillante (surf)
+    Patch("limpia", 4, 3, (_op(mul=1, tl=32, d1r=8, d2r=3, d1l=4, rr=7), _op(mul=1, dt=2, tl=8, d1r=5, d2r=3, d1l=3, rr=7),
+                           _op(mul=3, tl=40, d1r=10, d2r=4, d1l=5, rr=7), _op(mul=1, dt=6, tl=10, d1r=5, d2r=3, d1l=3, rr=7))),
+    # Sierra (sintetizador): los cuatro operadores suenan
+    Patch("sierra", 7, 7, (_op(mul=1, tl=22, rr=6), _op(mul=1, dt=3, tl=30, rr=6), _op(mul=2, tl=38, rr=6),
+                           _op(mul=1, dt=7, tl=30, rr=6))),
+    # Metal (trompeta): ataque un poco lento
+    Patch("metal", 4, 5, (_op(mul=1, tl=26, ar=22, d1r=4, d1l=2, rr=7), _op(mul=1, dt=2, tl=8, ar=24, d1r=2, d1l=1, rr=7),
+                          _op(mul=1, tl=34, ar=20, d1r=4, d1l=2, rr=7), _op(mul=1, dt=6, tl=12, ar=24, d1r=2, d1l=1, rr=7))),
+    # Flauta: casi un seno, ataque suave
+    Patch("flauta", 4, 0, (_op(mul=1, tl=44, ar=18, rr=6), _op(mul=1, tl=8, ar=18, rr=6), _op(mul=2, tl=60, ar=18, rr=6),
+                           _op(mul=1, dt=3, tl=14, ar=18, rr=6))),
+    # Acordeón: moduladores una octava arriba, portadores desafinados
+    Patch("acordeon", 4, 4, (_op(mul=2, tl=32, ar=26, rr=6), _op(mul=1, dt=2, tl=10, ar=26, rr=6),
+                             _op(mul=2, tl=34, ar=26, rr=6), _op(mul=1, dt=6, tl=12, ar=26, rr=6))),
+    # Órgano: los 4 operadores suenan, cada uno en un armónico
+    Patch("organo", 7, 3, (_op(mul=1, tl=26, rr=7), _op(mul=2, tl=34, rr=7), _op(mul=4, tl=42, rr=7),
+                           _op(mul=1, dt=3, tl=30, rr=7))),
+    # Piano eléctrico: cuerpo y una lengüeta metálica que se apaga rápido
+    Patch("piano", 4, 2, (_op(mul=1, tl=34, d1r=8, d2r=3, d1l=5, rr=6), _op(mul=1, tl=8, d1r=5, d2r=3, d1l=4, rr=6),
+                          _op(mul=14, tl=52, d1r=14, d2r=8, d1l=8, rr=8), _op(mul=1, dt=3, tl=12, d1r=5, d2r=3, d1l=5, rr=6))),
+    # Cuerda pulsada corta (arpegios)
+    Patch("pulsada", 4, 3, (_op(mul=1, tl=30, d1r=12, d2r=8, d1l=6, rr=9), _op(mul=1, tl=8, d1r=9, d2r=7, d1l=5, rr=9),
+                            _op(mul=3, tl=42, d1r=14, d2r=9, d1l=7, rr=9), _op(mul=1, dt=3, tl=12, d1r=9, d2r=7, d1l=5, rr=9))),
+    # Coro: ataque lento, un modulador suave sobre tres portadores
+    Patch("coro", 5, 2, (_op(mul=1, tl=36, ar=20, rr=5), _op(mul=1, dt=2, tl=24, ar=14, rr=5), _op(mul=2, tl=32, ar=14, rr=5),
+                         _op(mul=1, dt=6, tl=24, ar=14, rr=5))),
+    # Bajo: cadena de operadores (algoritmo 0) con ataque seco
+    Patch("bajo", 0, 4, (_op(mul=0, tl=30, d1r=10, d1l=6, rr=8), _op(mul=1, tl=40, d1r=12, d1l=6, rr=8),
+                         _op(mul=1, tl=32, d1r=8, d1l=4, rr=8), _op(mul=1, tl=4, d1r=5, d2r=4, d1l=2, rr=9))),
+    # Bombo: un seno (solo suena el operador 4) que baja de tono en 6 cuadros
+    Patch("bombo", 7, 0, (_op(tl=127), _op(tl=127), _op(tl=127), _op(mul=1, tl=0, d1r=13, d2r=10, d1l=3, rr=12)),
+          sweep=(19, 12, 7, 3, 1, 0)),
 ]}
 
-# Palabras del nombre del instrumento (sin acentos, en minúsculas) -> patch. Gana la primera que coincide.
+# Instrumentos de las canciones de NESBand -> sonido (como SONIDOS en GENBand/audio/nesband_fm.py)
+INSTRUMENT_PATCH = {
+    "Guitarra": "guitarra", "Melodia": "guitarra", "Surf": "limpia", "Chop": "apagada", "Sintetizador": "sierra",
+    "Trompeta": "metal", "Flauta": "flauta", "Lamento": "flauta", "Acordeon": "acordeon", "Piano": "piano",
+    "Organo": "organo", "Teclado": "organo", "Coro": "coro", "Pluck": "pulsada", "Arpegio": "pulsada", "Bajo": "bajo",
+}
+# Sin nombre exacto: palabras del nombre (sin acentos, en minúsculas) -> sonido. Gana la primera que coincide.
 PATCH_KEYWORDS: list[tuple[tuple[str, ...], str]] = [
-    (("guitarra", "guitar", "riff", "distor"), "guitarra"),
-    (("bajo", "bass", "bwomp", "thud"), "bajo"),
-    (("piano", "teclado", "keys", "clav"), "teclado"),
-    (("organo", "organ"), "organo"),
+    (("apagad", "chop", "palm", "mute"), "apagada"),
+    (("surf", "limpia", "clean"), "limpia"),
+    (("guitarra", "guitar", "riff", "distor", "melodia"), "guitarra"),
+    (("bajo", "bass"), "bajo"),
+    (("piano", "keys", "clav"), "piano"),
+    (("organo", "organ", "teclado"), "organo"),
     (("acordeon", "accordion"), "acordeon"),
-    (("coro", "choir", "lamento", "pad", "surf", "cuerda", "string"), "pad"),
-    (("pluck", "arpegio", "arp", "clank", "chop"), "pluck"),
-    (("trompeta", "trumpet", "flauta", "flute", "melodia", "sintetizador", "synth", "lead", "blip"), "lead"),
+    (("coro", "choir", "pad", "cuerda", "string"), "coro"),
+    (("flauta", "flute", "lamento"), "flauta"),
+    (("trompeta", "trumpet", "metal", "brass"), "metal"),
+    (("pluck", "arpegio", "arp", "pulsada"), "pulsada"),
+    (("sintetizador", "synth", "lead", "sierra", "saw"), "sierra"),
 ]
-CHANNEL_DEFAULT = {"Square1": "guitarra", "Square2": "teclado", "Triangle": "bajo"}
+CHANNEL_DEFAULT = {"Square1": "guitarra", "Square2": "organo", "Triangle": "bajo"}
 
-# Golpes de batería: palabras del nombre -> tipo. Cada tipo tiene tono, duración máxima, patch y prioridad propios.
+# Volumen: como GENBand, fijo por instrumento (el máximo de su envolvente del NES); el FM hace su propia caída.
+VOLUME_REFERENCE = 13  # el volumen del NES (0-15) que suena sin atenuar
+TL_PER_STEP = 1.5  # atenuación (en pasos de TL, 0,75 dB) por cada paso de volumen del NES debajo de la referencia
+CHANNEL_MIX = {1: 2}  # atenuación extra por canal FM (0-based): el teclado un poco abajo, como en GENBand
+
+# Batería: el bombo al FM 4 (sonido "bombo" sobre C2); la tarola y los platillos al ruido del SSG 1 (el SSG 3 es
+# de los efectos). Cada golpe de ruido pone en el SSG 1 un periodo de tono propio (con el tono apagado) para que
+# `drums.py` agrupe los golpes por altura: "ssg1:D3" la tarola, "ssg1:D5" el platillo y "ssg1:F5" el abierto.
 DRUM_KEYWORDS: list[tuple[tuple[str, ...], str]] = [
     (("bombo", "kick", "thud", "bwomp"), "bombo"),
     (("tarola", "snare", "clank", "chop"), "tarola"),
     (("abierto", "open"), "abierto"),
     (("platillo", "hat", "cymbal", "crash", "ride"), "platillo"),
 ]
-DRUM_PITCH = {"bombo": 43, "tarola": 50, "platillo": 74, "abierto": 77}  # G2, D3, D5, F5
-DRUM_FRAMES = {"bombo": 8, "tarola": 8, "platillo": 3, "abierto": 10}  # duración máxima de la tecla
+KICK_PITCH = 36  # C2 (con el barrido arranca en G3: el grupo es "fm4:G3")
+KICK_ROWS = 2  # filas que suena el bombo (como GENBand)
+DRUM_PITCH = {"bombo": KICK_PITCH + PATCHES["bombo"].sweep[0], "tarola": 50, "platillo": 74, "abierto": 77}
 DRUM_PRIORITY = {"bombo": 0, "tarola": 1, "abierto": 2, "platillo": 3}
-KICK_SWEEP = (0, 2, 4)  # semitonos que baja el bombo en los primeros cuadros (lo une drums.channel_strikes)
+SSG_DRUM_CHANNEL = 0  # SSG 1
+# Envolventes de GENBand (volumen del PSG por cuadro, 15 = lo más fuerte) y periodo del ruido del SSG. GENBand usa
+# ruido blanco a N/1024 en la tarola y N/512 en los platillos: el periodo de la tarola es el doble.
+NOISE_ENVELOPE = {
+    "tarola": (15, 14, 12, 10, 8, 7, 6, 5, 4, 3, 2, 1, 0),
+    "platillo": (10, 7, 4, 2, 0),
+    "abierto": (11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0),
+}
+NOISE_PERIOD = {"tarola": 18, "platillo": 9, "abierto": 9}
+SSG_MIXER = 0x37  # tonos apagados; ruido solo en el SSG 1
 
 
 def _norm(name: str) -> str:
@@ -126,7 +182,9 @@ def _norm(name: str) -> str:
 
 
 def patch_for(instrument: str | None, channel_type: str) -> Patch:
-    """El patch FM de un instrumento por su nombre; sin coincidencia, el de su canal (guitarra, teclado o bajo)."""
+    """El sonido FM de un instrumento por su nombre; sin coincidencia, el de su canal (guitarra, órgano o bajo)."""
+    if instrument in INSTRUMENT_PATCH:
+        return PATCHES[INSTRUMENT_PATCH[instrument]]
     name = _norm(instrument or "")
     for words, patch in PATCH_KEYWORDS:
         if any(w in name for w in words):
@@ -144,11 +202,21 @@ def drum_kind(instrument: str | None, sample: str | None, pitch: int) -> str:
     return "bombo" if pitch <= 48 else "tarola" if pitch <= 53 else "platillo"
 
 
-def attenuation(volume: int) -> int:
-    """Volumen de FamiStudio (0-15) a atenuación en pasos de TL (0,75 dB): 15 -> 0, 0 -> 127 (silencio)."""
-    if volume <= 0:
-        return 127
-    return min(127, round(-20 * math.log10(min(volume, 15) / 15) / 0.75))
+def volume_extra(volume: int) -> int:
+    """Atenuación de los portadores (pasos de TL) para un instrumento cuyo volumen máximo en el NES es `volume`."""
+    return max(0, round((VOLUME_REFERENCE - volume) * TL_PER_STEP))
+
+
+def ssg_volume(psg: int) -> int:
+    """Volumen del PSG de la Genesis (0-15, pasos de 2 dB) al del SSG (0-15, pasos de ~3 dB)."""
+    if psg <= 0:
+        return 0
+    return max(1, 15 - round((15 - min(psg, 15)) * 2 / 3))
+
+
+def ssg_period(pitch: int) -> int:
+    """Periodo de tono del SSG (12 bits) para una altura MIDI: solo sirve para agrupar los golpes."""
+    return max(1, min(4095, round(YM_CLOCK / 4 / 16 / (440 * 2 ** ((pitch - 69) / 12)))))
 
 
 # --- Frecuencias ------------------------------------------------------------------------------------------------
@@ -291,24 +359,17 @@ def parse_text(text: str) -> Project:
 
 @dataclass
 class _Event:
-    """Una nota ya resuelta para un canal FM: monofónica, con su patch, tono y volumen por cuadro."""
+    """Una nota ya resuelta para un canal FM: monofónica, con su sonido y la atenuación de sus portadores."""
 
     start: int
     end: int  # exclusivo
     pitch: int
     patch: Patch
-    instrument: Instrument | None
-    constant_volume: bool = False  # el triángulo no tiene volumen en el NES
-    sweep: tuple[int, ...] = ()  # semitonos que baja la altura en los primeros cuadros (bombo)
-
-    def volume(self, frame: int) -> int:
-        if self.constant_volume or self.instrument is None:
-            return 15
-        return self.instrument.volume_at(frame - self.start)
+    extra: int = 0  # pasos de TL que se suman a los portadores (volumen del instrumento y mezcla del canal)
 
     def midi(self, frame: int) -> int:
-        age = frame - self.start
-        return self.pitch - (self.sweep[min(age, len(self.sweep) - 1)] if self.sweep else 0)
+        sweep = self.patch.sweep
+        return self.pitch + (sweep[min(frame - self.start, len(sweep) - 1)] if sweep else 0)
 
 
 def _monophonic(events: list[_Event], limit: int) -> list[_Event]:
@@ -328,29 +389,39 @@ def _monophonic(events: list[_Event], limit: int) -> list[_Event]:
     return [e for e in out if e.end > e.start]
 
 
+def _max_volume(inst: Instrument | None) -> int:
+    return max(inst.volume) if inst and inst.volume else 15
+
+
 def _melodic_events(song: Song, project: Project, channel_type: str, limit: int) -> list[_Event]:
     events = []
+    mix = CHANNEL_MIX.get(MELODIC[channel_type], 0)
     for note in song.notes.get(channel_type, []):
         inst = project.instruments.get(note.instrument or "")
+        volume = 15 if channel_type == "Triangle" else _max_volume(inst)  # el triángulo no tiene volumen en el NES
         events.append(_Event(note.frame, note.frame + max(1, note.duration), note.pitch,
-                             patch_for(note.instrument, channel_type), inst, channel_type == "Triangle"))
+                             patch_for(note.instrument, channel_type), volume_extra(volume) + mix))
     return _monophonic(events, limit)
 
 
-def _drum_events(song: Song, project: Project, limit: int) -> list[_Event]:
-    """Los golpes de ruido y DPCM juntos, en un solo canal. Con varios en el mismo cuadro gana el de más prioridad."""
-    strikes: list[tuple[int, str, Instrument | None]] = []
+def _drum_strikes(song: Song, project: Project, limit: int) -> tuple[list[_Event], list[tuple[int, str]]]:
+    """Los golpes de ruido y DPCM: los bombos (eventos del FM 4) y los golpes de ruido [(cuadro, tipo)], uno por
+    cuadro (si coinciden, gana el de más prioridad: tarola, abierto, platillo)."""
+    row = int(song.attrs.get("NoteLength", "6"))
+    kicks: list[_Event] = []
+    noise: dict[int, str] = {}
     for channel_type in DRUM_TYPES:
         for note in song.notes.get(channel_type, []):
+            if note.frame >= limit:
+                continue
             inst = project.instruments.get(note.instrument or "")
             sample = inst.dpcm.get(note.pitch) if inst and channel_type == "DPCM" else None
-            strikes.append((note.frame, drum_kind(note.instrument, sample, note.pitch), inst))
-    strikes.sort(key=lambda s: (s[0], DRUM_PRIORITY[s[1]]))
-    events = []
-    for frame, kind, inst in strikes:
-        events.append(_Event(frame, frame + DRUM_FRAMES[kind], DRUM_PITCH[kind], PATCHES[kind], inst,
-                             sweep=KICK_SWEEP if kind == "bombo" else ()))
-    return _monophonic(events, limit)
+            kind = drum_kind(note.instrument, sample, note.pitch)
+            if kind == "bombo":
+                kicks.append(_Event(note.frame, note.frame + KICK_ROWS * row, KICK_PITCH, PATCHES["bombo"]))
+            elif note.frame not in noise or DRUM_PRIORITY[kind] < DRUM_PRIORITY[noise[note.frame]]:
+                noise[note.frame] = kind
+    return _monophonic(kicks, limit), sorted(noise.items())
 
 
 class _Channel:
@@ -360,13 +431,12 @@ class _Channel:
         self.port = index // 2
         self.offset = index % 2 + 1  # los canales FM del YM2610 usan los desplazamientos 1 y 2 de cada puerto
         self.keycode = (1, 2, 5, 6)[index]
-        self.patch: Patch | None = None
-        self.tls: tuple[int, ...] | None = None
+        self.loaded: tuple[Patch, int] | None = None
         self.freq: tuple[int, int] | None = None
         self.keyed = False
 
     def forget(self) -> None:
-        self.patch = self.tls = self.freq = None
+        self.loaded = self.freq = None
 
 
 _SLOT = (0, 8, 4, 12)  # desplazamiento de registro de los operadores 1, 2, 3 y 4
@@ -379,7 +449,7 @@ def _timeline(song: Song, project: Project) -> tuple[list[list[tuple[int, int, i
         raise ValueError(f"la canción {song.name!r} no tiene cuadros")
     loop = song.loop_frame
     per_channel = {i: _melodic_events(song, project, t, total) for t, i in MELODIC.items()}
-    per_channel[DRUM_CHANNEL] = _drum_events(song, project, total)
+    per_channel[DRUM_CHANNEL], noise = _drum_strikes(song, project, total)
     channels = {i: _Channel(i) for i in per_channel}
     frames: list[list[tuple[int, int, int]]] = [[] for _ in range(total)]
 
@@ -391,9 +461,11 @@ def _timeline(song: Song, project: Project) -> tuple[list[list[tuple[int, int, i
         frames[frame].append((0, 0x28, (0xF0 if on else 0) | ch.keycode))
         ch.keyed = on
 
+    frames[0].append((0, 0x07, SSG_MIXER))
+    for reg in (0x08, 0x09, 0x0A):
+        frames[0].append((0, reg, 0))
     for frame in range(total):
         if frame == 0:
-            frames[0].append((0, 0x07, 0xFF))  # SSG callado: la música es solo FM
             for ch in channels.values():
                 key(0, ch, False)
                 put(0, ch, 0xB4, 0xC0)  # salida a ambos lados, sin LFO
@@ -410,16 +482,7 @@ def _timeline(song: Song, project: Project) -> tuple[list[list[tuple[int, int, i
             if current.start == frame or (frame == loop and not ch.keyed):
                 if ch.keyed:
                     key(frame, ch, False)
-                _load_patch(frame, ch, current.patch, put)
-                ch.tls = None
-            tls = tuple(
-                min(127, op.tl + attenuation(current.volume(frame))) if i in current.patch.carriers else op.tl
-                for i, op in enumerate(current.patch.ops)
-            )
-            if tls != ch.tls:
-                for slot, value in enumerate(tls):
-                    put(frame, ch, 0x40, value, slot)
-                ch.tls = tls
+                _load_patch(frame, ch, current.patch, current.extra, put)
             freq = fm_freq(current.midi(frame))
             if freq != ch.freq:
                 put(frame, ch, 0xA4, (freq[0] << 3) | (freq[1] >> 8))
@@ -427,21 +490,55 @@ def _timeline(song: Song, project: Project) -> tuple[list[list[tuple[int, int, i
                 ch.freq = freq
             if not ch.keyed:
                 key(frame, ch, True)
+    _noise_writes(frames, noise, total, loop, int(song.attrs.get("NoteLength", "6")))
     return frames, total
 
 
-def _load_patch(frame: int, ch: _Channel, patch: Patch, put) -> None:
-    if ch.patch == patch:
+def _noise_writes(frames: list[list[tuple[int, int, int]]], noise: list[tuple[int, str]], total: int, loop: int,
+                  row: int) -> None:
+    """Los golpes de ruido en el SSG 1: cada uno con su envolvente hasta el siguiente golpe."""
+    vol_reg, tone_reg = 0x08 + SSG_DRUM_CHANNEL, 2 * SSG_DRUM_CHANNEL
+    volume = 0
+    period = noise_period = None
+    for i, (frame, kind) in enumerate(noise):
+        if frame == loop or (i and noise[i - 1][0] < loop <= frame):
+            period = noise_period = None  # el bucle vuelve aquí: se reescribe todo
+            volume = -1
+        until = min(noise[i + 1][0] if i + 1 < len(noise) else frame + 4 * row, total)
+        if volume:
+            frames[frame].append((0, vol_reg, 0))  # corta el golpe anterior: el siguiente es otro golpe
+            volume = 0
+        tone = ssg_period(DRUM_PITCH[kind])
+        if tone != period:
+            frames[frame].append((0, tone_reg, tone & 0xFF))
+            frames[frame].append((0, tone_reg + 1, tone >> 8))
+            period = tone
+        if NOISE_PERIOD[kind] != noise_period:
+            frames[frame].append((0, 0x06, NOISE_PERIOD[kind]))
+            noise_period = NOISE_PERIOD[kind]
+        envelope = NOISE_ENVELOPE[kind]
+        for k in range(until - frame):
+            v = ssg_volume(envelope[min(k, len(envelope) - 1)])
+            if v != volume:
+                frames[frame + k].append((0, vol_reg, v))
+                volume = v
+            if k >= len(envelope):
+                break
+
+
+def _load_patch(frame: int, ch: _Channel, patch: Patch, extra: int, put) -> None:
+    if ch.loaded == (patch, extra):
         return
     put(frame, ch, 0xB0, (patch.fb << 3) | patch.alg)
     for slot, op in enumerate(patch.ops):
         put(frame, ch, 0x30, (op.dt << 4) | op.mul, slot)
+        put(frame, ch, 0x40, min(127, op.tl + extra) if slot in patch.carriers else op.tl, slot)
         put(frame, ch, 0x50, (op.ks << 6) | op.ar, slot)
         put(frame, ch, 0x60, op.dr, slot)
         put(frame, ch, 0x70, op.sr, slot)
         put(frame, ch, 0x80, (op.sl << 4) | op.rr, slot)
         put(frame, ch, 0x90, 0, slot)
-    ch.patch = patch
+    ch.loaded = (patch, extra)
 
 
 # --- Escritura del VGM -------------------------------------------------------------------------------------------
@@ -468,6 +565,7 @@ def build_vgm(song: Song, project: Project, *, title: str | None = None, game: s
     # Al final se sueltan las teclas para que el bucle no arrastre notas colgadas
     for keycode in (1, 2, 5, 6):
         body += bytes([0x58, 0x28, keycode])
+    body += bytes([0x58, 0x08 + SSG_DRUM_CHANNEL, 0])
     body.append(0x66)
 
     header_size = 0x80

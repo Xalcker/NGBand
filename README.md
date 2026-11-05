@@ -3,7 +3,8 @@
 Un juego de ritmo estilo Guitar Hero / Rock Band para la SNK Neo Geo (MVS/AES, cartucho). Es de la familia de
 [NESBand](https://github.com/Xalcker/NESBand), GBBand y GENBand: las mismas reglas y el mismo generador de charts,
 con la autopista en perspectiva de GENBand (aquí hecha con sprites escalados por hardware) y el sonido del
-YM2610, con la batería en ADPCM-A.
+YM2610 con los sonidos FM de GENBand (la batería de las canciones originales: bombo FM y ruido del SSG; el driver
+también toca ADPCM-A).
 
 **Estado actual (v0.1.0): la ROM compila y arranca en MAME, con las 10 canciones y su música.** Ver
 `docs/ESTADO.md` para el detalle.
@@ -169,10 +170,19 @@ toca la canción con `ngplayer.js`, un emulador del YM2610 en JavaScript.
 
 ## Canciones originales
 
-Las diez canciones son las de NESBand, convertidas a parches FM del YM2610 (GPL-2.0-or-later): *Primer Ensayo*
-(`demo`), *Tormenta de Neón*, *Luz de Luna*, *Salto Mortal*, *Marcha del Cartucho*, *Noche sin Estrellas*,
-*Carrera de Fuego*, *Brisa de Verano*, *Cumbia del Cartucho* y *Amanecer Digital*. Se componen en Python en
-`audio/` (`audio/<nombre>.py` genera el `.vgm`), y los efectos de sonido están en `audio/efectos.txt`.
+Las diez canciones son las de NESBand (GPL-2.0-or-later): *Primer Ensayo* (`demo`, propia de NGBand), *Tormenta de
+Neón*, *Luz de Luna*, *Salto Mortal*, *Marcha del Cartucho*, *Noche sin Estrellas*, *Carrera de Fuego*, *Brisa de
+Verano*, *Cumbia del Cartucho* y *Amanecer Digital*. Se componen en Python en `audio/` (`audio/<nombre>.py` escribe
+el proyecto de FamiStudio `audio/<nombre>.txt`, igual que en NESBand) y `ngband_tools.famistudio` lo pasa al YM2610
+con el mismo arreglo de GENBand: guitarra, teclado y bajo en FM 1-3 con los sonidos de `GENBand/audio/sonidos.py`
+(volumen fijo por instrumento), el bombo en FM 4 y la tarola y los platillos en el ruido del SSG 1:
+
+```bash
+uv run python -m ngband_tools.famistudio audio/tormenta.txt audio/tormenta.vgm
+uv run ngband reimport tormenta
+```
+
+Los efectos de sonido están en `audio/efectos.txt` y suenan en el SSG 3.
 
 ## Pruebas
 
@@ -214,7 +224,8 @@ pierden cuadros; ver `docs/ESTADO.md`).
   tiles), sin trabajo del 68000. Las gemas y las colas se reducen con los registros de escala de cada sprite. Los
   textos y el HUD van en la capa fija (Fix).
 - **El audio:** un driver propio en el Z80 (`src/z80/`) aplica al YM2610 el flujo de escrituras por cuadro
-  (FM, SSG y la batería en ADPCM-A); el 68000 le manda órdenes (`src/audio_proto.h`). Para fallar, baja el volumen
+  (FM, SSG y ADPCM-A); el 68000 le manda órdenes (`src/audio_proto.h`), varias por cuadro: la NMI del Z80
+  confirma cada byte. Para fallar, baja el volumen
   del canal del instrumento y lo restaura al acertar.
 - **La lógica pura** (juez, vida, poder estelar, menús, opciones, práctica, récords) no depende del hardware y se
   prueba en el host con la misma fuente que va en la ROM.

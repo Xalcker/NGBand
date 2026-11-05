@@ -1,7 +1,7 @@
 -- Audio en MAME: título -> Menu, ← elige la última canción (la del final de la M1) y la deja sonar en el Menu.
 -- Cada 60 cuadros anota la posición del stream en el Z80 (g_sh.pos), sus cuadros aplicados, la respuesta y,
 -- con NGBAND_DEBUG, las desincronías que ve el 68000 (g_audio.desync_count). El WAV lo graba run.sh.
--- Uso: tests/mame/run.sh audio
+-- Uso: tests/mame/run.sh audio   (NGBAND_AUDIO_RIGHT=3 graba la cuarta canción, NGBAND_AUDIO_FRAMES el largo)
 local probe = tonumber(os.getenv("NGBAND_PROBE"), 16)
 local audio = tonumber(os.getenv("NGBAND_AUDIO") or "0", 16)
 local zsh = tonumber(os.getenv("NGBAND_Z80_SH"), 16)
@@ -15,6 +15,9 @@ for _, port in pairs(manager.machine.ioport.ports) do
 end
 local start = fields["1 Player Start"] or fields["P1 Start"]
 local left = fields["P1 Left"]
+local right = fields["P1 Right"]
+-- NGBAND_AUDIO_RIGHT=n: en vez de ← (la última), n veces → desde la primera canción (orden de `ngband list-songs`)
+local presses = tonumber(os.getenv("NGBAND_AUDIO_RIGHT") or "-1")
 -- ShadowRegs en el Z80 (SDCC, little endian, sin relleno): reg[2][256], muted, inst_mask[4], start, pos, end, ret,
 -- rep_left, drums, drum_count, drum_next, drum_muted, paused, replay, keyon[4], sfx_active, sfx_id, sfx_pos, sfx_mix, frames
 local SH_START, SH_POS, SH_END, SH_FRAMES = 0x20A, 0x20E, 0x212, 0x22B
@@ -33,7 +36,13 @@ emu.register_frame_done(function()
   end
   if f == 240 then start:set_value(1) end
   if f == 244 then start:set_value(0) end
-  if f == 300 then left:set_value(1) end
-  if f == 304 then left:set_value(0) end
+  if presses < 0 then
+    if f == 300 then left:set_value(1) end
+    if f == 304 then left:set_value(0) end
+  elseif f >= 300 and f < 300 + presses * 10 then
+    right:set_value((f - 300) % 10 < 4 and 1 or 0)
+  elseif f == 300 + presses * 10 then
+    right:set_value(0)
+  end
   if f == frames then manager.machine:exit() end
 end)

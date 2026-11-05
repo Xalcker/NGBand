@@ -1,7 +1,7 @@
 {
   "version": 1,
   "groups": {
-    "fm4:D5": {"lane": "snare", "cymbal": false},
-    "fm4:G2": {"lane": "kick", "cymbal": false}
+    "fm4:G3": {"lane": "kick", "cymbal": false},
+    "ssg1:D5": {"lane": "snare", "cymbal": false}
   }
 }
