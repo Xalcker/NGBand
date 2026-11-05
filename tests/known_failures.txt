@@ -1,28 +1,18 @@
 # Fallas conocidas de NGBand en el arnés de MAME (uv run ngband test). No cambian el código de salida; una
 # falla que NO esté aquí sí lo cambia. Si uno de estos casos pasa, el resumen lo avisa: quítalo de la lista.
-# Lista tomada el 2026-11-03 (34 ok, 23 con falla); coincide con docs/ESTADO.md ("34 de 55 casos pasan").
-# Las causas están en docs/ESTADO.md: sincronía audio/Chart con fallos, 2 jugadores (cuadros perdidos), récord
-# tras apagar, Practice (marcha-*: check_result.py truena con KeyError 'fin_bucle') y calibración del bot humano.
+# Lista tomada el 2026-11-05 (45 ok, 12 con falla de 57); coincide con docs/ESTADO.md.
+# Las causas están en docs/ESTADO.md: 2 jugadores (cuadros perdidos), sincronía tras pausar a 125%, récord tras
+# apagar, Practice (marcha-*: check_result.py truena con KeyError 'fin_bucle'), vs-record (KeyError 'record') y
+# calibración del bot humano.
 coop-j2-cae
 coop-perfecto
-demo-machacar
-demo-mitad
 demo-record-persiste
-humano-carrera-d2-s1
-humano-carrera-d3-s1
 humano-conjunto
-humano-cumbia-d3-s1
-humano-luna-d1-s1
-humano-tormenta-d2-s1
-humano-tormenta-d3-s1
 marcha-marcas
 marcha-practica
-perf-1p-peor
 perf-coop-peor
 perf-vs-bateria
 perf-vs-peor
-tormenta-machacar
 tormenta-pausa-rapida
-tormenta-rapida
 vs-empate
 vs-record

@@ -481,10 +481,13 @@ Scene play_frame(void)
     }
     if (steps)
       for (p = 0; p < s_np; p++) { s_held_edge[p] = 0; s_held_power[p] = false; }
-    /* Un solo byte por VBlank: dos cuadros del stream en el mismo cuadro de video van en CMD_FRAME2. */
+    /* Dos cuadros del stream en el mismo cuadro de video van en un CMD_FRAME2. */
     if (sent >= 2) ac_push(&g_audio, CMD_FRAME2, 0);
     else if (sent == 1) ac_push(&g_audio, CMD_FRAME, 0);
     else ac_push(&g_audio, CMD_HOLD, 0);          /* el stream no avanza en este cuadro (R12.8) */
+    /* La sonda junto al comando: si el Test_Harness lee entre los dos (draw() tarda), ve el cuadro del stream
+     * ya encolado y el reloj viejo (a 125% eso son 2 cuadros). */
+    g_probe.song_frame = s_clock.frame;
     mute_sync();
   }
   red_tick();

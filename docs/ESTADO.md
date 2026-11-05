@@ -1,16 +1,40 @@
 # Estado de NGBand y cómo continuar
 
-Última sesión (2026-10-30, tarde): las 10 canciones entran y el audio suena en MAME; el arnés completo ya corre.
+Última sesión (2026-11-05): el 68000 manda varios bytes por VBlank al Z80 con confirmación; el arnés pasa 45 de 57.
 Este archivo es el punto de partida para cualquier agente o persona que siga el trabajo. Léelo junto con
 `CLAUDE.md`, `README.md` y la spec en `.kiro/specs/neogeo-band/` (requirements.md, design.md, tasks.md).
 
 ## Resumen en una línea
 
 La ROM compila con **las 10 canciones**, en MAME **suena**, y la autopista tiene **pista fija** (sprites) con
-franjas que se mueven solas. Repositorio público: <https://github.com/Xalcker/NGBand>. Las 250 pruebas del host
-pasan. En `tests/run_tests.sh` (`-DNGBAND_DEBUG`): **34 de 55 casos pasan**, 0 desincronías; los bots perfectos
-aciertan todo en todos los modos. Lo que falla: sincronía audio/Chart con fallos (14), 2 jugadores (cuadros
-perdidos), récord tras apagar, Practice y la calibración del bot humano.
+franjas que se mueven solas. Repositorio público: <https://github.com/Xalcker/NGBand>. Las 255 pruebas del host
+pasan. En el arnés de MAME (`uv run ngband test --sin-ventana`, `-DNGBAND_DEBUG`): **45 de 57 casos pasan**, 0
+desincronías del driver. Lo que falla: 2 jugadores (cuadros perdidos), sincronía tras pausar a 125%, récord tras
+apagar, Practice, `vs-record` y la calibración del bot humano.
+
+## Sesión 6 (2026-11-05): varios bytes por VBlank al Z80
+
+- **Causa de la sincronía audio/Chart con fallos:** el ISR mandaba **un byte por VBlank**. Un silencio o un efecto
+  (2 bytes cada uno) ocupaba los VBlanks de los CMD_FRAME siguientes y el stream se atrasaba 2-4 cuadros (hasta 10
+  con 2 jugadores).
+- **Ahora:** la NMI del Z80 (`z80/driver.c`) responde en `port_reply` cuántos bytes lleva **recibidos**, y
+  `ac_pump` (`audio_cmd.c`) manda todo lo pendiente en el mismo VBlank (hasta `AC_BYTES_PER_VBLANK`). Antes de
+  cada byte espera a que la respuesta alcance `sent` (hasta `AC_ACK_SPIN` lecturas); si el Z80 no confirma, para
+  y sigue en el siguiente VBlank. Tras `AC_LAG_LIMIT` VBlanks sin confirmar, da el byte por perdido (cuenta en
+  `desync_count`). El protocolo de comandos no cambió.
+- **Arranque:** tras `CMD_RESET` el 68000 espera `AC_RESET_WAIT` (2) VBlanks, porque la respuesta todavía es la
+  del driver de la BIOS (0). Además, `main` del Z80 ya no pone `port_reply = 0`: ponía 0 encima de bytes que
+  habían llegado por NMI mientras arrancaba, y daba 2 desincronías en cada partida.
+- **Sonda:** `g_probe.song_frame` se escribe junto al CMD_FRAME del cuadro, no después de `draw()`. Si el bot
+  leía en medio, veía el cuadro ya encolado con el reloj viejo, y a 125% eso eran 2 cuadros (`tormenta-rapida`).
+- Pruebas del host nuevas en `test_audio_frame2.py` (`ac_pump` con un Z80 simulado: latch de un byte, lento,
+  muerto, y RESET con la respuesta de la BIOS).
+- **Sin ventana:** `tests/mame/mame.sh` pone `SDL_VIDEODRIVER=dummy`. En macOS `-video none` solo sigue
+  abriendo una ventana.
+- Arnés: 34 → **45 de 57**. Arreglados: demo-machacar, demo-mitad, perf-1p-peor, tormenta-machacar,
+  tormenta-rapida y 6 del bot humano.
+- **Queda:** `tormenta-pausa-rapida`. Después de pausar a 125%, una muestra aislada con la Chart 2 cuadros
+  adelante cada 256 VBlanks (20 de 6022). No se ha encontrado la causa (sin desincronía del driver).
 
 ## Sesión 5 (2026-10-30): bandcore
 
@@ -173,9 +197,7 @@ en el WAV.
 
 ## Pendientes, en orden sugerido
 
-1. **Sincronía audio/Chart con fallos** (14 casos, 2-4 cuadros pasajeros; 7-10 con 2 jugadores): MUTE/UNMUTE y
-   SFX son de 2 bytes y la cola (`AC_QUEUE_SIZE` 16, un byte por VBlank) se atrasa o se llena. Ideas: cola más
-   grande, mandar los FRAME antes que los silencios, juntar MUTE+UNMUTE del mismo instrumento.
+1. **Sincronía tras pausar a 125%** (`tormenta-pausa-rapida`, ver sesión 6): muestras aisladas cada 256 VBlanks.
 2. **2 jugadores:** VS pierde ~45 cuadros, Co-Op que cae ~160. Perfilar como en la sesión 3.
 3. **Récord que no sobrevive al apagar** (`demo-record-persiste`): se guarda al inicio de la backup RAM
    (0xD00000), que en el MVS es de la BIOS. Usar el bloque que la BIOS guarda y restaura (cabecera del cartucho).

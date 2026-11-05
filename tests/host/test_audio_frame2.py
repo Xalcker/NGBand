@@ -7,7 +7,7 @@ from test_shadow_driver import rig  # noqa: F401  (fixture)
 AUDIO_CDEF = """
 typedef struct {
   u16 q[16]; u8 head, tail; u8 arg_pending; u8 arg; u8 expected; u8 check_enabled; u8 overflow;
-  u16 desync_count; u8 last_expected, last_reply; u8 grace; u8 lag_run; u8 sent;
+  u16 desync_count; u8 last_expected, last_reply; u8 grace; u8 lag_run; u8 sent; u8 stall; u8 boot_wait;
 } AudioCmd;
 void ac_init(AudioCmd *a);
 u8 ac_push(AudioCmd *a, u8 cmd, u8 arg);
@@ -15,6 +15,7 @@ u8 ac_pending(const AudioCmd *a);
 u8 ac_next_byte(AudioCmd *a, u8 *byte);
 u8 ac_check(AudioCmd *a, u8 reply);
 void ac_flush(AudioCmd *a);
+u8 ac_pump(AudioCmd *a, u8 (*reply)(void), void (*write)(u8));
 """
 _declared = False
 
@@ -170,3 +171,106 @@ def test_flush_keeps_a_half_sent_argument(ffi, lib):
     assert lib.ac_next_byte(a, byte) and byte[0] == CMD_SONG_START
     lib.ac_flush(a)
     assert _drain(ffi, lib, a) == [5]
+
+
+# ---- ac_pump: varios bytes por VBlank con confirmación del Z80 (NMI responde los bytes recibidos) ----
+CMD_SFX = 0x0A
+CMD_UNMUTE_INST = 0x09
+AC_LAG_LIMIT = 30
+
+
+class FakeZ80:
+    """Latch de un byte: escribir sobre un byte que la NMI no ha leído lo pisa. `delay` lecturas de la respuesta
+    pasan antes de que la NMI tome el byte; con `dead` nunca lo toma."""
+
+    def __init__(self, ffi, delay=0, dead=False, reply=0):
+        self.got, self.lost, self.count, self.delay, self.dead = [], 0, 0, delay, dead
+        self.latch, self.wait, self.bios_reply = None, 0, reply
+        self.reply_cb = ffi.callback("u8(void)", self._reply)
+        self.write_cb = ffi.callback("void(u8)", self._write)
+
+    def _nmi(self):
+        b, self.latch = self.latch, None
+        self.got.append(b)
+        self.count = 0 if b == CMD_RESET and (len(self.got) == 1 or self.got[-2] not in (0x02, 0x08, 0x09, 0x0A, 0x0C)) \
+            else (self.count + 1) & 0xFF
+        self.bios_reply = None
+
+    def _reply(self):
+        if self.latch is not None and not self.dead:
+            if self.wait <= 0:
+                self._nmi()
+            else:
+                self.wait -= 1
+        return self.count if self.bios_reply is None else self.bios_reply
+
+    def _write(self, b):
+        if self.latch is not None:
+            self.lost += 1
+        self.latch, self.wait = b, self.delay
+
+    def vblank_end(self):
+        """Entre VBlanks el Z80 siempre alcanza a tomar el byte."""
+        if self.latch is not None and not self.dead:
+            self._nmi()
+
+
+def _pump(lib, a, z):
+    n = lib.ac_pump(a, z.reply_cb, z.write_cb)
+    z.vblank_end()
+    return n
+
+
+def test_pump_sends_reset_without_ack_and_waits(ffi, lib):
+    a = _audio(ffi, lib)
+    z = FakeZ80(ffi, reply=0x5A)                  # la BIOS deja otra respuesta
+    lib.ac_push(a, CMD_RESET, 0)
+    lib.ac_push(a, CMD_SILENCE_ALL, 0)
+    assert _pump(lib, a, z) == 1                  # solo el RESET en ese VBlank
+    assert _pump(lib, a, z) == 0                  # AC_RESET_WAIT: el driver arranca
+    assert _pump(lib, a, z) == 0
+    assert _pump(lib, a, z) == 1
+    assert z.got == [CMD_RESET, CMD_SILENCE_ALL] and z.lost == 0
+
+
+def test_pump_miss_does_not_delay_frame(ffi, lib):
+    """Un fallo (silencio + efecto, 4 bytes) sale en el mismo VBlank que su CMD_FRAME: el stream no se atrasa."""
+    a = _audio(ffi, lib)
+    z = FakeZ80(ffi, delay=3)
+    lib.ac_push(a, CMD_SONG_START, 1)
+    _pump(lib, a, z)
+    for vb in range(200):
+        lib.ac_push(a, CMD_FRAME, 0)
+        if vb % 7 == 3:
+            lib.ac_push(a, CMD_MUTE_INST, 0)
+            lib.ac_push(a, CMD_SFX, 5)
+        if vb % 7 == 5:
+            lib.ac_push(a, CMD_UNMUTE_INST, 0)
+        _pump(lib, a, z)
+        assert lib.ac_pending(a) == 0 and not a.arg_pending
+        assert a.expected == vb + 1
+    assert z.lost == 0 and a.desync_count == 0
+    assert z.got.count(CMD_FRAME) == 200 and z.got.count(CMD_FRAME2) == 0
+
+
+def test_pump_never_overwrites_unread_byte(ffi, lib):
+    a = _audio(ffi, lib)
+    z = FakeZ80(ffi, delay=10_000)                # más lento que AC_ACK_SPIN: un byte por VBlank
+    for _ in range(4):
+        lib.ac_push(a, CMD_FRAME, 0)
+    assert _pump(lib, a, z) == 1
+    assert z.lost == 0
+
+
+def test_pump_recovers_from_dead_z80(ffi, lib):
+    a = _audio(ffi, lib)
+    z = FakeZ80(ffi, dead=True)
+    lib.ac_push(a, CMD_FRAME, 0)
+    lib.ac_push(a, CMD_SILENCE_ALL, 0)             # (dos FRAME se juntarían en un FRAME2)
+    assert _pump(lib, a, z) == 1                  # el primero sale; el Z80 nunca lo confirma
+    for _ in range(AC_LAG_LIMIT - 1):
+        assert _pump(lib, a, z) == 0
+    z.dead, z.latch = False, None                 # el byte se perdió; el Z80 vuelve
+    n = _pump(lib, a, z)
+    assert (n, a.stall, a.sent, a.desync_count, z.got) == (1, 0, 1, 1, [CMD_SILENCE_ALL])
+    assert a.desync_count == 1

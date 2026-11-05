@@ -20,7 +20,7 @@ void isr_init(void)
 void rom_callback_VBlank(void)
 {
   REG_WATCHDOG = 0;
-  ac_vblank();                 /* primero el audio: un byte como máximo por cuadro */
+  ac_vblank();                 /* primero el audio: todo lo pendiente, byte por byte con confirmación */
   input_poll();                /* una lectura de controles por cuadro */
   (void)vq_flush(VBLANK_VQ_BUDGET);
   if (s_vblank_flag) g_lost_frames++;   /* el bucle principal no llegó a consumir el cuadro anterior */

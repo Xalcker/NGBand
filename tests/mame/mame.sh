@@ -2,7 +2,8 @@
 #
 #   run_mame <log> <argumentos de MAME...>
 #
-# Por defecto MAME corre sin ventana (-video none). Con NGBAND_MAME_WINDOW=1 abre su ventana, pero en segundo
+# Por defecto MAME corre sin ventana (-video none y SDL_VIDEODRIVER=dummy: en macOS -video none solo sigue
+# abriendo una ventana). Con NGBAND_MAME_WINDOW=1 abre su ventana, pero en segundo
 # plano: en macOS la ventana de MAME (SDL) toma el foco al aparecer, así que se le devuelve a la aplicación que
 # estaba al frente y se puede seguir trabajando mientras corre la prueba. MAME no se pausa al perder el foco y
 # el teclado no le llega (el bot de Lua maneja los controles). El sonido sigue apagado (-sound none); el audio
@@ -16,7 +17,7 @@ run_mame() {
     local log=$1
     shift
     if [ "${NGBAND_MAME_WINDOW:-0}" != 1 ]; then
-        "$MAME" "$@" -video none >"$log" 2>&1
+        SDL_VIDEODRIVER="${SDL_VIDEODRIVER:-dummy}" "$MAME" "$@" -video none >"$log" 2>&1
         return
     fi
     local front id pid now i

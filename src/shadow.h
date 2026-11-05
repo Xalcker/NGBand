@@ -104,8 +104,9 @@ u16 shadow_stream_frames(const ShadowRegs *s, u32 start, u32 end);
 void shadow_command(ShadowRegs *s, u8 cmd, u8 arg);
 /* Un byte recibido por el registro de comando: junta comando y argumento. */
 void shadow_rx(ShadowRegs *s, u8 byte);
-/* Registro de respuesta: bytes procesados (rx_count). El 68000 lo compara con los que mandó: la diferencia es lo
- * que el Z80 tiene atrasado; si no baja, se perdió un byte. */
+/* Bytes procesados (rx_count), para el modelo del host. El driver responde desde la NMI con los bytes
+ * *recibidos* (confirmación para mandar el siguiente, ver audio_cmd.h); en el bucle principal son los mismos
+ * en cuanto vacía su cola. */
 u8 shadow_response(const ShadowRegs *s);
 
 #endif /* NGBAND_SHADOW_H */
