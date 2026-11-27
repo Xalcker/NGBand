@@ -193,7 +193,7 @@ def load_song(opts: dict, root: Path = ROOT) -> SongData:
 
     frames = _music_frames(data, opts.get("duration"))
     shared = sharedcharts.load(root / "src" / "songs" / name, LEAD_IN)
-    if shared is not None and opts.get("duration") is None:   # con el chart de NESBand, también su duración
+    if shared is not None:   # con el chart compartido, también su duración (la música no sigue después del chart)
         frames = min(frames, shared.music_frames)
     writes = [(f, w) for f, w in vgm.unrolled_writes(data, frames) if f < frames]
     stream = fr.encode_stream(fr.build_frames(writes, frames))
