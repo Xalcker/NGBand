@@ -1,7 +1,8 @@
 # Estado de NGBand y cómo continuar
 
-Última sesión (2026-11-05): varios bytes por VBlank al Z80 y las canciones con el arreglo de GENBand; el arnés pasa
-44 de 57.
+Última sesión (2026-11-26): las canciones duran una vuelta del VGM (antes se repetían hasta 120 s), igual que en
+NESBand; el arnés pasa 46 de 57 (`coop-perfecto` y `perf-coop-peor` ya pasan).
+Sesión anterior (2026-11-05): varios bytes por VBlank al Z80 y las canciones con el arreglo de GENBand (44 de 57).
 Este archivo es el punto de partida para cualquier agente o persona que siga el trabajo. Léelo junto con
 `CLAUDE.md`, `README.md` y la spec en `.kiro/specs/neogeo-band/` (requirements.md, design.md, tasks.md).
 
@@ -10,7 +11,7 @@ Este archivo es el punto de partida para cualquier agente o persona que siga el 
 La ROM compila con **las 10 canciones**, en MAME **suena**, y la autopista tiene **pista fija** (sprites) con
 franjas que se mueven solas. Repositorio público: <https://github.com/Xalcker/NGBand>. Las 255 pruebas del host
 pasan (más las 108 de `pctools/tests`). En el arnés de MAME (`uv run ngband test --sin-ventana`, `-DNGBAND_DEBUG`):
-**44 de 57 casos pasan**, 0 desincronías del driver. Lo que falla: cuadros perdidos (2 jugadores y batería en
+**46 de 57 casos pasan**, 0 desincronías del driver. Lo que falla: cuadros perdidos (2 jugadores y batería en
 experto), sincronía tras pausar a 125%, récord tras apagar, Practice, `vs-record` y la calibración del bot humano.
 
 ## Sesión 6b (2026-11-05): el arreglo de GENBand
