@@ -1,7 +1,11 @@
 # Estado de NGBand y cómo continuar
 
 Última sesión (2026-11-26): las canciones duran una vuelta del VGM (antes se repetían hasta 120 s), igual que en
-NESBand; el arnés pasa 46 de 57 (`coop-perfecto` y `perf-coop-peor` ya pasan).
+NESBand; el arnés pasa 46 de 57 (`coop-perfecto` y `perf-coop-peor` ya pasan). Además, **el chart es el de NESBand**:
+cada canción trae `charts.json` (`bandcore.sharedcharts`, se copia con `band sync-charts`) y `songgen.py` lo usa tal
+cual, con su tempo y su duración, en vez de generarlo del VGM; las 10 canciones son idénticas nota por nota a NESBand.
+La demo ahora es la de NESBand («Primer Ensayo», `audio/demo.txt` con `ngband_tools.famistudio`); `audio/demo.py`
+(la demo propia de NGBand) ya no se usa: si se corre, sobrescribe `audio/demo.vgm`.
 Sesión anterior (2026-11-05): varios bytes por VBlank al Z80 y las canciones con el arreglo de GENBand (44 de 57).
 Este archivo es el punto de partida para cualquier agente o persona que siga el trabajo. Léelo junto con
 `CLAUDE.md`, `README.md` y la spec en `.kiro/specs/neogeo-band/` (requirements.md, design.md, tasks.md).

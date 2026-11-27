@@ -28,6 +28,7 @@ from . import notes as nt
 from . import vgm
 from .songlist import ROOT
 from .ym2610 import Ym2610State
+from bandcore import sharedcharts
 
 SONGS_DIR = ROOT / "src" / "songs"
 
@@ -191,6 +192,9 @@ def load_song(opts: dict, root: Path = ROOT) -> SongData:
     game = clean_text(opts.get("game") or data.tags.get("game") or "")
 
     frames = _music_frames(data, opts.get("duration"))
+    shared = sharedcharts.load(root / "src" / "songs" / name, LEAD_IN)
+    if shared is not None and opts.get("duration") is None:   # con el chart de NESBand, también su duración
+        frames = min(frames, shared.music_frames)
     writes = [(f, w) for f, w in vgm.unrolled_writes(data, frames) if f < frames]
     stream = fr.encode_stream(fr.build_frames(writes, frames))
 
@@ -209,6 +213,8 @@ def load_song(opts: dict, root: Path = ROOT) -> SongData:
     drums = parse_channels(opts.get(DRUMS), allow_adpcm=True) or drum_channel_names(notes, used)
     onsets = [n.frame for c, ns in notes.items() if c in used or c in drums for n in ns]
     grid = ch.estimate_beat(onsets, opts.get("beat_frames"))
+    if shared is not None:   # el chart de NESBand trae su rejilla de tiempos
+        grid = ch.BeatGrid(shared.frames_per_beat, shared.first_beat)
     return SongData(opts, name, title, game, stream, frames, notes, assign, drums, grid, sample_count,
                     root / "src" / "songs" / name, data.unsupported)
 
@@ -225,7 +231,13 @@ def drum_assignment(sd: SongData) -> dict | None:
 
 
 def auto_charts(sd: SongData) -> dict[str, list[ch.ChartNote]]:
-    """Charts generados, por clave "instrumento/dificultad"."""
+    """Charts generados, por clave "instrumento/dificultad".
+
+    Si la canción tiene charts.json (el chart de NESBand, ver bandcore.sharedcharts), son esos tal cual, batería
+    incluida: así se toca lo mismo en las cuatro consolas. Si no, se generan desde las notas del VGM."""
+    shared = sharedcharts.load(sd.folder, LEAD_IN)
+    if shared is not None:
+        return dict(shared.charts)
     charts: dict[str, list[ch.ChartNote]] = {}
     for inst, role in INSTRUMENTS:
         names = sd.assign.get(inst)
