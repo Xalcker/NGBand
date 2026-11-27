@@ -4,8 +4,8 @@
 NESBand; el arnés pasa 46 de 57 (`coop-perfecto` y `perf-coop-peor` ya pasan). Además, **el chart es el de NESBand**:
 cada canción trae `charts.json` (`bandcore.sharedcharts`, se copia con `band sync-charts`) y `songgen.py` lo usa tal
 cual, con su tempo y su duración, en vez de generarlo del VGM; las 10 canciones son idénticas nota por nota a NESBand.
-La demo ahora es la de NESBand («Primer Ensayo», `audio/demo.txt` con `ngband_tools.famistudio`); `audio/demo.py`
-(la demo propia de NGBand) ya no se usa: si se corre, sobrescribe `audio/demo.vgm`.
+La demo ahora es la de NESBand («Primer Ensayo», `audio/demo.txt` con `ngband_tools.famistudio`); se borró
+`audio/demo.py`, la demo propia de NGBand (queda en el historial de git, en v0.1.0).
 Sesión anterior (2026-11-05): varios bytes por VBlank al Z80 y las canciones con el arreglo de GENBand (44 de 57).
 Este archivo es el punto de partida para cualquier agente o persona que siga el trabajo. Léelo junto con
 `CLAUDE.md`, `README.md` y la spec en `.kiro/specs/neogeo-band/` (requirements.md, design.md, tasks.md).
@@ -249,7 +249,13 @@ en el WAV.
 4. **Practice** (`marcha-practica`: el bot no ve vueltas) y **bot humano** (pierde 0% en experto).
 5. **Pista:** ajustar colores/franjas a gusto; el poder estelar podría cambiar la paleta de la pista
    (`GFX_PISTA_PAL`); las líneas de tiempo, si vuelven, mejor dentro del arte que con sprites.
-6. **Escuchar el audio con oído**; **hardware real**. La paridad vive solo en `../NESBand/docs/paridad.md`
+6. **El audio suena un poco raro (escuchado con oído el 2026-11-26).** Primera vez que alguien lo escucha: *Green Hill
+   Zone* llevada con `band convert --to todos` (notas de la Genesis -> `band famistudio` -> `ngband_tools.famistudio` ->
+   YM2610), en MAME, junto a la misma canción en NES, GB y GEN; NG fue la única que sonó rara. El chart sí es el mismo
+   en las cuatro. Falta precisar qué suena mal (timbres FM, volúmenes, la batería en SSG, el tempo) comparando con
+   `tests/mame/audio.lua` (WAV) y con GENBand, que usa los mismos sonidos FM. Para repetirlo: `band convert` de
+   `GENBand/songs_src/Sonic_the_Hedgehog_(Sega_Mega_Drive)/02 Green Hill Zone.vgz` con `--name greenhill` (música
+   comercial: no va a git). **Hardware real** sigue pendiente. La paridad vive solo en `../NESBand/docs/paridad.md`
    (columna NG); actualízala ahí al terminar cada mejora.
 
 ## Cuidado
