@@ -1,7 +1,7 @@
 """Song_Importer: de un VGM del YM2610 a `src/songs/<n>/song.c` e `import.json` (R14.1-R14.5, R14.9).
 
 Pasos de `import_song`:
-  1. Lee el VGM (`.vgm`/`.vgz`) y repite el bucle hasta `--duration` segundos (R14.5).
+  1. Lee el VGM (`.vgm`/`.vgz`): una vuelta, o hasta `--duration` segundos repitiendo el bucle (R14.5).
   2. Agrupa las escrituras por cuadro y codifica el Frame_Stream (frames.py).
   3. Extrae las notas FM/SSG (notes.py) y los golpes de ADPCM-A (el índice de sample es la altura).
   4. Genera los Charts de las 4 Difficulties de guitarra, teclado y bajo (12 Charts) y de la batería.
@@ -32,7 +32,6 @@ from .ym2610 import Ym2610State
 SONGS_DIR = ROOT / "src" / "songs"
 
 LEAD_IN = 128  # cuadros de autopista antes de la música
-DEFAULT_DURATION = 120  # segundos, si el VGM tiene bucle y no se pide otra cosa
 MAX_FRAMES = 65000  # el juego cuenta los cuadros en 16 bits
 TEXT_MAX = 26  # caracteres que caben en el menú
 
@@ -171,8 +170,8 @@ class SongData:
 
 
 def _music_frames(data: vgm.Vgm, duration: float | None) -> int:
-    if duration is None and data.loop_sample is not None:
-        duration = DEFAULT_DURATION
+    # Sin --duration se toca una vuelta (con la introducción), aunque el VGM tenga bucle: así dura lo mismo que en
+    # NESBand, GBBand y GENBand. Para grabar más, se pide con --duration (queda en import.json)
     frames = vgm.frame_of(data.total_samples) if duration is None else int(duration * 60)
     return max(1, min(frames, MAX_FRAMES - LEAD_IN - 60))
 
