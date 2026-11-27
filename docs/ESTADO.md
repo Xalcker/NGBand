@@ -249,7 +249,13 @@ en el WAV.
 4. **Practice** (`marcha-practica`: el bot no ve vueltas) y **bot humano** (pierde 0% en experto).
 5. **Pista:** ajustar colores/franjas a gusto; el poder estelar podría cambiar la paleta de la pista
    (`GFX_PISTA_PAL`); las líneas de tiempo, si vuelven, mejor dentro del arte que con sprites.
-6. **Escuchar el audio con oído**; **hardware real**. La paridad vive solo en `../NESBand/docs/paridad.md`
+6. **El audio suena un poco raro (escuchado con oído el 2026-11-26).** Primera vez que alguien lo escucha: *Green Hill
+   Zone* llevada con `band convert --to todos` (notas de la Genesis -> `band famistudio` -> `ngband_tools.famistudio` ->
+   YM2610), en MAME, junto a la misma canción en NES, GB y GEN; NG fue la única que sonó rara. El chart sí es el mismo
+   en las cuatro. Falta precisar qué suena mal (timbres FM, volúmenes, la batería en SSG, el tempo) comparando con
+   `tests/mame/audio.lua` (WAV) y con GENBand, que usa los mismos sonidos FM. Para repetirlo: `band convert` de
+   `GENBand/songs_src/Sonic_the_Hedgehog_(Sega_Mega_Drive)/02 Green Hill Zone.vgz` con `--name greenhill` (música
+   comercial: no va a git). **Hardware real** sigue pendiente. La paridad vive solo en `../NESBand/docs/paridad.md`
    (columna NG); actualízala ahí al terminar cada mejora.
 
 ## Cuidado
